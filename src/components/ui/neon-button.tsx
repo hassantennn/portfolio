@@ -7,9 +7,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-cyan-500/5 hover:bg-cyan-500/0 border-cyan-500/25 text-cyan-200',
-        primary: 'bg-cyan-200 hover:bg-white text-slate-950 border-transparent shadow-[0_0_40px_rgba(34,211,238,.28)] hover:shadow-[0_0_55px_rgba(34,211,238,.4)]',
-        ghost: 'border-white/12 bg-white/[0.04] hover:border-cyan-300/40 hover:text-cyan-100 text-white',
+        default: 'bg-slate-400/[0.06] hover:bg-slate-400/0 border-slate-400/25 text-slate-200',
+        primary: 'bg-slate-200 hover:bg-white text-slate-950 border-transparent shadow-[0_0_40px_rgba(148,163,184,.22)] hover:shadow-[0_0_55px_rgba(148,163,184,.35)]',
+        ghost: 'border-white/12 bg-white/[0.04] hover:border-slate-300/40 hover:text-slate-100 text-white',
       },
       size: {
         default: 'px-6 py-3 text-[0.78rem] tracking-[0.14em] uppercase',
@@ -39,11 +39,11 @@ const NeonButton = React.forwardRef<HTMLButtonElement, NeonButtonProps>(
       return (
         <a href={href} target={target} rel={rel} className={cls}>
           {neon && variant !== 'primary' && (
-            <span className="absolute h-px opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out inset-x-0 top-0 bg-gradient-to-r w-3/4 mx-auto from-transparent via-cyan-400 to-transparent" />
+            <span className="absolute h-px opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out inset-x-0 top-0 bg-gradient-to-r w-3/4 mx-auto from-transparent via-slate-400 to-transparent" />
           )}
           {children}
           {neon && variant !== 'primary' && (
-            <span className="absolute group-hover:opacity-30 transition-all duration-500 ease-in-out inset-x-0 h-px -bottom-px bg-gradient-to-r w-3/4 mx-auto from-transparent via-cyan-400 to-transparent" />
+            <span className="absolute group-hover:opacity-30 transition-all duration-500 ease-in-out inset-x-0 h-px -bottom-px bg-gradient-to-r w-3/4 mx-auto from-transparent via-slate-400 to-transparent" />
           )}
         </a>
       );
@@ -52,11 +52,11 @@ const NeonButton = React.forwardRef<HTMLButtonElement, NeonButtonProps>(
     return (
       <button className={cls} ref={ref} {...props}>
         {neon && variant !== 'primary' && (
-          <span className="absolute h-px opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out inset-x-0 top-0 bg-gradient-to-r w-3/4 mx-auto from-transparent via-cyan-400 to-transparent" />
+          <span className="absolute h-px opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out inset-x-0 top-0 bg-gradient-to-r w-3/4 mx-auto from-transparent via-slate-400 to-transparent" />
         )}
         {children}
         {neon && variant !== 'primary' && (
-          <span className="absolute group-hover:opacity-30 transition-all duration-500 ease-in-out inset-x-0 h-px -bottom-px bg-gradient-to-r w-3/4 mx-auto from-transparent via-cyan-400 to-transparent" />
+          <span className="absolute group-hover:opacity-30 transition-all duration-500 ease-in-out inset-x-0 h-px -bottom-px bg-gradient-to-r w-3/4 mx-auto from-transparent via-slate-400 to-transparent" />
         )}
       </button>
     );

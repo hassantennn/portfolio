@@ -11,16 +11,15 @@ import gatorParkVideo from './assets/walkthrough_gatorpark_web.mp4';
 import posterLabSafe from './assets/poster_labsafe.jpg';
 import posterMetaShift from './assets/poster_metashift.jpg';
 import posterGatorPark from './assets/poster_gatorpark.jpg';
-import link1 from './assets/link1.png';
-import link2 from './assets/link2.png';
-import link3 from './assets/link3.png';
-import link4 from './assets/link4.png';
-import link5 from './assets/link5.png';
-import link6 from './assets/link6.png';
-import link7 from './assets/link7.png';
-import link8 from './assets/link8.png';
-import link9 from './assets/link9.png';
-import { ElegantShape } from './components/ui/shape-landing-hero';
+import link1 from './assets/link1.webp';
+import link2 from './assets/link2.webp';
+import link3 from './assets/link3.webp';
+import link4 from './assets/link4.webp';
+import link5 from './assets/link5.webp';
+import link6 from './assets/link6.webp';
+import link7 from './assets/link7.webp';
+import link8 from './assets/link8.webp';
+import link9 from './assets/link9.webp';
 import { NeonButton } from './components/ui/neon-button';
 import { PortfolioFooter } from './components/ui/footer-section';
 import { InteractiveMenu } from './components/ui/modern-mobile-menu';
@@ -44,12 +43,6 @@ const linkedInCards = [
   { img: link9, title: 'LinkedIn Post 9',         caption: 'Published milestone'              },
 ];
 
-const proofRow: [string, string][] = [
-  ['Real workflow systems', 'LabSafe'],
-  ['Automation tooling', 'MetaShift'],
-  ['Published mobile app', 'GatorPark'],
-  ['Technical stack', 'Python · Django · Swift · Firebase · React'],
-];
 
 /* ─── Utilities ──────────────────────────────────────────────────────────── */
 function tone(accent: Accent) {
@@ -558,7 +551,7 @@ function VideoCardPhone({ src, poster, title, label, description = '', proof = [
           {/* Right: proof bullets */}
           <div className="md:w-[260px] md:shrink-0">
             <ul className="mb-5 space-y-2">
-              {(sections ? sections.slice(1).map(s => s.heading + ' — ' + s.text) : proof).map(item => (
+              {(sections ? sections.slice(1).map(s => s.heading + ': ' + s.text) : proof).map(item => (
                 <li key={item} className={`flex items-start gap-2.5 text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: t.hex }} />
                   {item}
@@ -709,7 +702,7 @@ function ProcessSection({ isDark }: { isDark: boolean }) {
   ];
 
   return (
-    <section id="process" className="py-20 md:py-28 scroll-mt-20">
+    <section id="process" className="py-14 md:py-20 scroll-mt-20">
       {/* Heading */}
       <div className="mb-14 text-center">
         <p className="mb-2 text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">process</p>
@@ -722,7 +715,7 @@ function ProcessSection({ isDark }: { isDark: boolean }) {
       </div>
 
       {/* Glass card */}
-      <div ref={cardRef} className="mx-auto max-w-[640px]">
+      <div ref={cardRef} className="mx-auto max-w-[860px]">
         <div
           className={`relative overflow-hidden rounded-[2rem] border backdrop-blur-xl ${isDark ? 'border-white/[0.08] bg-white/[0.025]' : 'border-slate-200/80 bg-white/60'}`}
           style={{
@@ -756,7 +749,7 @@ function ProcessSection({ isDark }: { isDark: boolean }) {
           >
             <motion.div
               className="w-full"
-              style={{ rotateX: rotX, rotateY: rotY, maxWidth: '500px', margin: '0 auto' }}
+              style={{ rotateX: rotX, rotateY: rotY, maxWidth: '740px', margin: '0 auto' }}
               animate={{ y: [0, -7, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', repeatType: 'loop' }}
             >
@@ -857,7 +850,7 @@ function ProcessSection({ isDark }: { isDark: boolean }) {
       </div>
 
       {/* 4-column step descriptions */}
-      <div className="mx-auto mt-7 grid max-w-[640px] grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mx-auto mt-7 grid max-w-[860px] grid-cols-2 gap-3 md:grid-cols-4">
         {descriptions.map(({ label, desc, pixels }) => (
           <div
             key={label}
@@ -906,7 +899,7 @@ function CardScrollReveal({ children }: { children: React.ReactNode }) {
 function ProofSection({ isDark }: { isDark: boolean }) {
   const { ref: headerRef, visible: headerVis } = useReveal();
   return (
-    <section id="work" className="py-20 md:py-28 scroll-mt-20">
+    <section id="work" className="py-14 md:py-20 scroll-mt-20">
       <div ref={headerRef} className={`reveal ${headerVis ? 'revealed' : ''} mb-14 max-w-2xl`}>
         <p className="mb-3 text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">proof of work</p>
         <h2 className={`text-[2.4rem] font-black leading-[1.05] tracking-[-0.04em] md:text-5xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -958,32 +951,6 @@ function ProofSection({ isDark }: { isDark: boolean }) {
         </CardScrollReveal>
       </div>
 
-      <div className="mt-12">
-        <p className={`mb-5 text-[10px] font-black uppercase tracking-[0.28em] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-          Built, shipped, and used
-        </p>
-        <div className="space-y-3">
-          {proofRow.map(([label, sub], i) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, x: 56, y: 6 }}
-              whileInView={{ opacity: 1, x: 0, y: 0 }}
-              viewport={{ once: true, margin: '-48px' }}
-              transition={{ duration: 0.55, delay: i * 0.09, ease: [0.25, 0.4, 0.25, 1] }}
-              className={`flex items-center gap-5 rounded-2xl border px-6 py-4 ${isDark ? 'border-white/[0.06] bg-white/[0.025]' : 'border-slate-200 bg-white/60'}`}
-            >
-              <span className={`shrink-0 text-[2.6rem] font-black leading-none select-none ${isDark ? 'text-white/[0.05]' : 'text-slate-900/[0.06]'}`}>
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <div className={`w-px self-stretch ${isDark ? 'bg-white/[0.07]' : 'bg-slate-200'}`} />
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{label}</p>
-                <p className={`mt-0.5 text-[11px] font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{sub}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }
@@ -1165,7 +1132,7 @@ function EnquirySection({ isDark }: { isDark: boolean }) {
   }
 
   return (
-    <section id="contact" className="py-20 md:py-28 scroll-mt-20">
+    <section id="contact" className="py-14 md:py-20 scroll-mt-20">
       <div ref={ref} className={`reveal ${visible ? 'revealed' : ''} mb-12 text-center`}>
         <p className="mb-2 text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">services</p>
         <h2 className={`text-3xl font-black tracking-[-0.03em] md:text-4xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
