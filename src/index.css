@@ -51,7 +51,7 @@ body::before {
 }
 
 .surface:hover {
-  box-shadow: 0 28px 100px -48px rgba(56,189,248,.65);
+  box-shadow: 0 28px 100px -48px rgba(148,163,184,.35);
 }
 
 /* ─── Carousel scrollbar hide ───────────────────────────────────────────── */
@@ -88,7 +88,7 @@ body::before {
   text-transform: uppercase;
 }
 
-.float-field.focused label { color: rgb(34,211,238); }
+.float-field.focused label { color: rgb(148,163,184); }
 .float-field.invalid label { color: rgba(239,68,68,0.85) !important; }
 
 .float-input,
@@ -108,7 +108,7 @@ body::before {
 }
 
 .float-input:focus,
-.float-textarea:focus { border-color: rgba(34,211,238,0.42); box-shadow: 0 0 0 3px rgba(34,211,238,0.06); }
+.float-textarea:focus { border-color: rgba(148,163,184,0.42); box-shadow: 0 0 0 3px rgba(148,163,184,0.06); }
 
 .float-field.invalid .float-input,
 .float-field.invalid .float-textarea { border-color: rgba(239,68,68,0.45); }
@@ -126,11 +126,11 @@ body::before {
 
 /* Light mode overrides */
 html.light .float-field label { color: rgba(80,70,60,0.6); }
-html.light .float-field.focused label { color: rgb(6,120,155); }
+html.light .float-field.focused label { color: rgb(71,85,105); }
 html.light .float-input,
 html.light .float-textarea { border-color: rgba(0,0,0,0.12); background: rgba(0,0,0,0.01); }
 html.light .float-input:focus,
-html.light .float-textarea:focus { border-color: rgba(6,120,155,0.42); box-shadow: 0 0 0 3px rgba(6,120,155,0.07); }
+html.light .float-textarea:focus { border-color: rgba(71,85,105,0.42); box-shadow: 0 0 0 3px rgba(71,85,105,0.07); }
 
 /* ─── Hero ───────────────────────────────────────────────────────────────── */
 .hero-heading {
@@ -194,7 +194,7 @@ html.light .float-textarea:focus { border-color: rgba(6,120,155,0.42); box-shado
   min-width: 3rem;
 }
 
-.menu__item.active { color: rgb(34, 211, 238); }
+.menu__item.active { color: rgb(148, 163, 184); }
 
 .menu__item::after {
   content: '';
@@ -204,7 +204,7 @@ html.light .float-textarea:focus { border-color: rgba(6,120,155,0.42); box-shado
   transform: translateX(-50%);
   width: var(--lineWidth, 0px);
   height: 2px;
-  background: rgba(34, 211, 238, 0.75);
+  background: rgba(148, 163, 184, 0.75);
   border-radius: 999px;
   transition: width 280ms ease;
 }
@@ -219,7 +219,7 @@ html.light .float-textarea:focus { border-color: rgba(6,120,155,0.42); box-shado
   letter-spacing: 0.14em;
   transition: color 200ms ease;
 }
-.menu__text.active { color: rgb(34, 211, 238); }
+.menu__text.active { color: rgb(148, 163, 184); }
 
 /* ─── Dock icon sibling hover ────────────────────────────────────────────── */
 .dock-icon:hover + .dock-icon {
@@ -281,11 +281,14 @@ html.light .text-slate-500    { color: #5a5a5a !important; }
 html.light .text-slate-600    { color: #444444 !important; }
 
 /* Accent colours */
-html.light .text-cyan-300    { color: rgb(6,  120, 155) !important; }
-html.light .text-cyan-200    { color: rgb(6,  120, 155) !important; }
-html.light .text-violet-300  { color: rgb(109,  40, 217) !important; }
-html.light .text-emerald-300 { color: rgb( 16, 185, 129) !important; }
-html.light .text-amber-300   { color: rgb(180,  95,   0) !important; }
+html.light .text-cyan-300    { color: rgb(71,  85, 105) !important; }
+html.light .text-cyan-200    { color: rgb(71,  85, 105) !important; }
+html.light .text-violet-300  { color: rgb(71,  85, 105) !important; }
+html.light .text-emerald-300 { color: rgb(71,  85, 105) !important; }
+html.light .text-amber-300   { color: rgb(71,  85, 105) !important; }
+html.light .text-slate-200   { color: rgb(51,  65,  85) !important; }
+html.light .text-slate-300   { color: rgb(71,  85, 105) !important; }
+html.light .text-slate-400   { color: rgb(100, 116, 139) !important; }
 
 /* Borders */
 html.light .border-white\/\[0\.06\]  { border-color: rgba(0,0,0,.09) !important; }
@@ -327,7 +330,7 @@ html.light .menu {
   border-top-color: rgba(0,0,0,0.09);
 }
 html.light .menu__item       { color: rgba(60,55,50,0.65); }
-html.light .menu__item.active { color: rgb(6,120,155); }
-html.light .menu__text.active { color: rgb(6,120,155); }
-html.light .menu__item::after { background: rgba(6,120,155,0.75); }
+html.light .menu__item.active { color: rgb(71,85,105); }
+html.light .menu__text.active { color: rgb(71,85,105); }
+html.light .menu__item::after { background: rgba(71,85,105,0.75); }
 
