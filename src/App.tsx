@@ -11,6 +11,9 @@ import gatorParkVideo from './assets/walkthrough_gatorpark_web.mp4';
 import posterLabSafe from './assets/poster_labsafe.jpg';
 import posterMetaShift from './assets/poster_metashift.jpg';
 import posterGatorPark from './assets/poster_gatorpark.jpg';
+import labsafeLogo   from './assets/labsafe-logo.webp';
+import metashiftLogo from './assets/metashift-logo.webp';
+import gatorparkLogo from './assets/gatorpark-logo.webp';
 import link1 from './assets/link1.webp';
 import link2 from './assets/link2.webp';
 import link3 from './assets/link3.webp';
@@ -76,7 +79,7 @@ function useVideoLazy(src: string) {
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          if (!video.src) { video.src = src; video.load(); }
+          if (!video.src) { video.src = src; video.load(); video.play().catch(() => {}); }
           obs.disconnect();
         }
       },
@@ -368,10 +371,10 @@ function Hero({ isDark }: { isDark: boolean }) {
 }
 
 /* ─── VideoCard16x9 ──────────────────────────────────────────────────────── */
-function VideoCard16x9({ src, poster, title, label, description, proof, chips, accent, isDark, idx, useLaptop = false }: {
+function VideoCard16x9({ src, poster, title, label, description, proof, chips, accent, isDark, idx, useLaptop = false, logo }: {
   src: string; poster?: string; title: string; label: string; description: string;
   proof: string[]; chips: string[];
-  accent: Accent; isDark: boolean; idx: number; useLaptop?: boolean;
+  accent: Accent; isDark: boolean; idx: number; useLaptop?: boolean; logo?: string;
 }) {
   const t = tone(accent);
   const { ref: revealRef, visible } = useReveal();
@@ -404,7 +407,14 @@ function VideoCard16x9({ src, poster, title, label, description, proof, chips, a
               {/* Left: label, title, chips, description */}
               <div className="flex-1">
                 <span className={`mb-3 block text-[10px] font-black uppercase tracking-[0.28em] ${t.text}`}>{label}</span>
-                <h3 className={`mb-3 text-2xl font-black tracking-[-0.04em] md:text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+                <div className="mb-3 flex items-center gap-3">
+                  {logo && (
+                    <div className={`flex h-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border px-2 ${isDark ? 'border-white/[0.08] bg-white/[0.05]' : 'border-slate-700/20 bg-slate-900/80'}`}>
+                      <img src={logo} alt={`${title} logo`} className="h-7 w-auto max-w-[88px] object-contain" />
+                    </div>
+                  )}
+                  <h3 className={`text-2xl font-black tracking-[-0.04em] md:text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+                </div>
                 <div className="mb-4 flex flex-wrap gap-1.5">
                   {chips.map(chip => (
                     <span key={chip} className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] ${t.text} ${t.border} ${t.bg}`}>
@@ -435,7 +445,14 @@ function VideoCard16x9({ src, poster, title, label, description, proof, chips, a
             {/* Info panel */}
             <div className="flex flex-col justify-center p-7 md:p-10 xl:w-[360px] xl:shrink-0">
               <span className={`mb-3 block text-[10px] font-black uppercase tracking-[0.28em] ${t.text}`}>{label}</span>
-              <h3 className={`mb-3 text-3xl font-black tracking-[-0.04em] ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+              <div className="mb-3 flex items-center gap-3">
+                {logo && (
+                  <div className={`flex h-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border px-2 ${isDark ? 'border-white/[0.08] bg-white/[0.05]' : 'border-slate-700/20 bg-slate-900/80'}`}>
+                    <img src={logo} alt={`${title} logo`} className="h-7 w-auto max-w-[88px] object-contain" />
+                  </div>
+                )}
+                <h3 className={`text-3xl font-black tracking-[-0.04em] ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+              </div>
               <div className="mb-5 flex flex-wrap gap-1.5">
                 {chips.map(chip => (
                   <span key={chip} className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] ${t.text} ${t.border} ${t.bg}`}>
@@ -477,12 +494,12 @@ function VideoCard16x9({ src, poster, title, label, description, proof, chips, a
 }
 
 /* ─── VideoCardPhone ─────────────────────────────────────────────────────── */
-function VideoCardPhone({ src, poster, title, label, description = '', proof = [], sections, chips, accent, isDark }: {
+function VideoCardPhone({ src, poster, title, label, description = '', proof = [], sections, chips, accent, isDark, logo }: {
   src: string; poster?: string; title: string; label: string;
   description?: string; proof?: string[];
   sections?: { heading: string; text: string }[];
   chips: string[];
-  accent: Accent; isDark: boolean;
+  accent: Accent; isDark: boolean; logo?: string;
 }) {
   const t = tone(accent);
   const { ref: revealRef, visible } = useReveal();
@@ -535,7 +552,14 @@ function VideoCardPhone({ src, poster, title, label, description = '', proof = [
           {/* Left: label, title, chips, description */}
           <div className="flex-1">
             <span className={`mb-3 block text-[10px] font-black uppercase tracking-[0.28em] ${t.text}`}>{label}</span>
-            <h3 className={`mb-3 text-2xl font-black tracking-[-0.04em] md:text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+            <div className="mb-3 flex items-center gap-3">
+              {logo && (
+                <div className={`flex h-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border px-2 ${isDark ? 'border-white/[0.08] bg-white/[0.05]' : 'border-slate-700/20 bg-slate-900/80'}`}>
+                  <img src={logo} alt={`${title} logo`} className="h-7 w-auto max-w-[88px] object-contain" />
+                </div>
+              )}
+              <h3 className={`text-2xl font-black tracking-[-0.04em] md:text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+            </div>
             <div className="mb-4 flex flex-wrap gap-1.5">
               {chips.map(chip => (
                 <span key={chip} className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] ${t.text} ${t.border} ${t.bg}`}>
@@ -886,6 +910,7 @@ function CardScrollReveal({ children }: { children: React.ReactNode }) {
         style={{
           rotateX,
           scale,
+          borderRadius: '2rem',
           boxShadow: '0 0 #0000004d, 0 9px 20px #0000004a, 0 37px 37px #00000042, 0 84px 50px #00000026, 0 149px 60px #0000000a, 0 233px 65px #00000003',
         }}
       >
@@ -920,7 +945,7 @@ function ProofSection({ isDark }: { isDark: boolean }) {
             description="A lab management system replacing spreadsheet and email-based workflows with structured records, request flows, and lineage visualisation."
             proof={['Role-based access', 'Structured request workflows', 'Lineage visualisation']}
             chips={['Research ops', 'RBAC', 'Lineage']}
-            accent="emerald" isDark={isDark} idx={0} useLaptop
+            accent="emerald" isDark={isDark} idx={0} useLaptop logo={labsafeLogo}
           />
         </CardScrollReveal>
         <CardScrollReveal>
@@ -932,7 +957,7 @@ function ProofSection({ isDark }: { isDark: boolean }) {
             description="A workflow automation tool that turns messy image folders and catalogue metadata into matched, organised, export-ready batches."
             proof={['Metadata matching', 'Duplicate and missing-record detection', 'Organised batch export']}
             chips={['Automation', 'Metadata', 'Batch export']}
-            accent="violet" isDark={isDark} idx={1} useLaptop
+            accent="violet" isDark={isDark} idx={1} useLaptop logo={metashiftLogo}
           />
         </CardScrollReveal>
         <CardScrollReveal>
@@ -946,7 +971,7 @@ function ProofSection({ isDark }: { isDark: boolean }) {
               { heading: 'System behaviour',       text: 'Firebase-powered updates with a privacy-minimal user flow.' },
             ]}
             chips={['iOS', 'Firebase', 'App Store']}
-            accent="cyan" isDark={isDark}
+            accent="cyan" isDark={isDark} logo={gatorparkLogo}
           />
         </CardScrollReveal>
       </div>
