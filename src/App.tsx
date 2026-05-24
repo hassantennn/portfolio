@@ -1,80 +1,46 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense, type ReactNode, type FormEvent, type RefObject } from 'react';
 import { motion } from 'framer-motion';
-import { Brain, Atom, Code2, Calculator, Sun, Moon } from 'lucide-react';
-import labSafeLogo from './assets/labsafe-logo-clean.png';
-import metaShiftLogo from './assets/metashift-logo-clean.png';
-import archivaultLogo from './assets/archivault-logo-clean.png';
-import gatorParkLogo from './assets/gatorpark-logo-clean.png';
+import { Sun, Moon } from 'lucide-react';
+import labSafeVideo from './assets/walkthrough_labsafe.mp4';
+import metaShiftVideo from './assets/walkthrough_metashift.mov';
+import gatorParkVideo from './assets/walkthrough_gatorpark.mov';
+import link1 from './assets/link1.png';
+import link2 from './assets/link2.png';
+import link3 from './assets/link3.png';
+import link4 from './assets/link4.png';
+import link5 from './assets/link5.png';
+import link6 from './assets/link6.png';
+import link7 from './assets/link7.png';
+import link8 from './assets/link8.png';
+import link9 from './assets/link9.png';
 import { ElegantShape } from './components/ui/shape-landing-hero';
-import AnoAI from './components/ui/animated-shader-background';
-import RadialOrbitalTimeline from './components/ui/radial-orbital-timeline';
 import { NeonButton } from './components/ui/neon-button';
 import { PortfolioFooter } from './components/ui/footer-section';
 import { InteractiveMenu } from './components/ui/modern-mobile-menu';
 
+const AnoAI = lazy(() => import('./components/ui/animated-shader-background'));
+
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 type Accent = 'emerald' | 'violet' | 'amber' | 'cyan';
-type Popup = { project: Project } | null;
 
-type Project = {
-  name: string; label: string; year: string; accent: Accent; logo: string;
-  summary: string; impact: string; sceneLabel: string;
-  proof: string[]; stack: string[]; metrics: [string, string][]; story: string[];
-};
 
-/* ─── Data ───────────────────────────────────────────────────────────────── */
-const projects: Project[] = [
-  {
-    name: 'LabSafe', label: 'Research software system', year: 'Django / LIMS', accent: 'emerald', logo: labSafeLogo,
-    summary: 'A laboratory information management system for animal science workflows, structured records, and traceable operational requests.',
-    impact: 'Moves research operations away from fragmented spreadsheets, paper trails, and email chains into a controlled central system.',
-    sceneLabel: 'Research ops matrix',
-    proof: ['Role-aware access', 'Lineage visualisation', 'Structured request flows'],
-    stack: ['Django', 'Database', 'RBAC', 'Data Import', 'Research Ops'],
-    metrics: [['03', 'role layers'], ['100%', 'traceable'], ['02', 'workflow lanes']],
-    story: ['Designed around research-lab accountability.', 'Gives teams clearer operational visibility.', 'Turns messy records into structured software flows.']
-  },
-  {
-    name: 'MetaShift', label: 'Digital collections automation', year: 'Desktop / Metadata', accent: 'violet', logo: metaShiftLogo,
-    summary: 'Desktop software that matches catalogue metadata to image files and exports organised, diagnostics-backed batch folders.',
-    impact: 'Makes messy archival image collections usable, auditable, and ready for delivery without manual matching chaos.',
-    sceneLabel: 'Metadata alignment field',
-    proof: ['Identifier normalisation', 'Duplicate detection', 'Missing record reports'],
-    stack: ['Desktop', 'Metadata', 'Data Cleaning', 'Batch Export', 'Reports'],
-    metrics: [['04', 'pipeline stages'], ['99%', 'cleaner'], ['∞', 'batch scale']],
-    story: ['Built for archives and digital collections.', 'Highlights missing and unmatched records.', 'Transforms raw folders into delivery-ready batches.']
-  },
-  {
-    name: 'Archivault', label: 'Archival integrity tool', year: 'Checksums / Verification', accent: 'amber', logo: archivaultLogo,
-    summary: 'A checksum manifest generator and verifier for detecting missing, changed, or corrupted files in storage workflows.',
-    impact: 'Gives archival workflows confidence that stored material remains intact over time.',
-    sceneLabel: 'Integrity verification grid',
-    proof: ['Manifest generation', 'Folder verification', 'Mismatch summaries'],
-    stack: ['SHA-1', 'MD5', 'JSON Manifests', 'Verification', 'Reliability'],
-    metrics: [['02', 'hash modes'], ['01', 'manifest core'], ['0', 'silent drift']],
-    story: ['Turns invisible storage risk into clear signals.', 'Supports repeatable long-term checks.', 'Designed around trust, preservation, and auditability.']
-  },
-  {
-    name: 'GatorPark', label: 'Realtime mobile product', year: 'iOS / Firebase', accent: 'cyan', logo: gatorParkLogo,
-    summary: 'An iOS-first parking availability product with anonymous check-ins and live garage occupancy state.',
-    impact: 'Turns uncertain campus parking into a live availability signal that users can understand quickly.',
-    sceneLabel: 'Live occupancy plane',
-    proof: ['Anonymous auth flow', 'Live occupancy state', 'Privacy-minimal design'],
-    stack: ['Swift', 'Firebase', 'Firestore', 'App Store', 'Realtime'],
-    metrics: [['19ms', 'signal feel'], ['24/7', 'availability'], ['01', 'mobile app']],
-    story: ['Prioritises simple user behaviour over heavy accounts.', 'Uses live state to make availability feel current.', 'Keeps the product privacy-minimal and practical.']
-  }
+const linkedInCards = [
+  { img: link1, title: 'Mitacs @ UofT',          caption: 'Research internship announcement' },
+  { img: link2, title: 'GatorPark',               caption: 'App Store launch proof'           },
+  { img: link3, title: 'MetaShift & Archivault',  caption: 'Internship project milestone'     },
+  { img: link4, title: 'LabSafe',                 caption: 'Team project proof'               },
+  { img: link5, title: 'LinkedIn Post 5',         caption: 'Published milestone'              },
+  { img: link6, title: 'LinkedIn Post 6',         caption: 'Published milestone'              },
+  { img: link7, title: 'LinkedIn Post 7',         caption: 'Published milestone'              },
+  { img: link8, title: 'LinkedIn Post 8',         caption: 'Published milestone'              },
+  { img: link9, title: 'LinkedIn Post 9',         caption: 'Published milestone'              },
 ];
 
-const heroMetrics: [string, string][] = [
-  ['04', 'projects'], ['05+', 'domains'], ['UF + UoA', 'research roles'], ['Aberdeen', 'Scotland']
-];
-
-const researchOrbitData = [
-  { id: 1, title: 'AI / ML', date: 'UF Research Asst.', content: 'Active research at the University of Florida using autoencoders and GANs to analyse equine motion and posture. Built a PyQt GUI for veterinary scientists — bridging deep learning with real lab workflows.', category: 'AI', icon: Brain, relatedIds: [2, 3, 4], status: 'in-progress' as const, energy: 88 },
-  { id: 2, title: 'Quantum', date: 'Research direction', content: 'Future-facing study into distributed quantum algorithm benchmarking and performance analysis — built on the mathematical foundations developed at Aberdeen and pointing toward post-classical computing.', category: 'Research', icon: Atom, relatedIds: [1, 4], status: 'in-progress' as const, energy: 75 },
-  { id: 3, title: 'Products', date: '4 shipped', content: 'Four production builds — LabSafe (research LIMS), MetaShift (archival metadata automation), Archivault (checksum integrity tooling), and GatorPark (iOS live-parking app). Real users, real constraints.', category: 'Engineering', icon: Code2, relatedIds: [1, 4], status: 'completed' as const, energy: 90 },
-  { id: 4, title: 'Maths + CS', date: 'UoA Undergraduate', content: 'BSc (Hons) Mathematics and Computing Science at the University of Aberdeen. Discrete math, linear algebra, and probability as the underpinning of ML models, quantum circuits, and reliable software systems.', category: 'Core', icon: Calculator, relatedIds: [1, 2, 3], status: 'in-progress' as const, energy: 95 },
+const proofRow: [string, string][] = [
+  ['Real workflow systems', 'LabSafe'],
+  ['Automation tooling', 'MetaShift'],
+  ['Published mobile app', 'GatorPark'],
+  ['Technical stack', 'Python · Django · Swift · Firebase · React'],
 ];
 
 /* ─── Utilities ──────────────────────────────────────────────────────────── */
@@ -87,17 +53,6 @@ function tone(accent: Accent) {
   }[accent];
 }
 
-function useTilt(intensity = 10) {
-  const [style, setStyle] = useState<CSSProperties>({});
-  function onPointerMove(e: ReactPointerEvent<HTMLElement>) {
-    const r = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width;
-    const y = (e.clientY - r.top) / r.height;
-    setStyle({ transform: `rotateX(${(0.5 - y) * intensity}deg) rotateY(${(x - 0.5) * intensity}deg)`, ['--mx' as string]: `${x * 100}%`, ['--my' as string]: `${y * 100}%` });
-  }
-  function onPointerLeave() { setStyle({ transform: 'rotateX(0deg) rotateY(0deg)' }); }
-  return { style, onPointerMove, onPointerLeave };
-}
 
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
@@ -110,6 +65,160 @@ function useReveal() {
     return () => obs.disconnect();
   }, []);
   return { ref, visible };
+}
+
+function useVideoLazy(src: string) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const video = ref.current;
+    if (!video) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!video.src) { video.src = src; video.load(); }
+          obs.disconnect();
+        }
+      },
+      { rootMargin: '300px' }
+    );
+    obs.observe(video);
+    return () => obs.disconnect();
+  }, [src]);
+  return ref;
+}
+
+/* ─── MacbookMockup ──────────────────────────────────────────────────────── */
+function MacbookMockup({ videoRef, hex }: { videoRef: RefObject<HTMLVideoElement>; hex: string }) {
+  return (
+    <div className="relative w-full" style={{ perspective: '1400px' }}>
+      {/* Diffuse glow behind device */}
+      <div
+        className="pointer-events-none absolute -inset-[12%] -z-10"
+        style={{
+          background: `radial-gradient(ellipse 70% 55% at 50% 60%, ${hex}2e, transparent 70%)`,
+          filter: 'blur(28px)',
+        }}
+      />
+
+      {/* 3D tilt — rotateX gives the "screen leaning back" depth illusion */}
+      <div style={{ transform: 'rotateX(5deg)', transformStyle: 'preserve-3d' }}>
+
+        {/* ── Lid ── */}
+        <div
+          className="relative w-full overflow-hidden"
+          style={{
+            aspectRatio: '16/10',
+            borderRadius: '14px 14px 3px 3px',
+            background: 'linear-gradient(155deg, #30303a 0%, #1d1d24 45%, #111116 100%)',
+            border: '2px solid rgba(255,255,255,0.15)',
+            borderBottom: '1.5px solid rgba(255,255,255,0.05)',
+            boxShadow: [
+              '0 7px 0 rgba(0,0,0,0.8)',
+              '0 48px 96px rgba(0,0,0,0.8)',
+              '0 8px 24px rgba(0,0,0,0.55)',
+              'inset 0 1px 0 rgba(255,255,255,0.11)',
+              'inset 0 -2px 0 rgba(0,0,0,0.6)',
+              `0 0 90px ${hex}1e`,
+            ].join(', '),
+          }}
+        >
+          {/* Camera */}
+          <div
+            className="absolute top-2 left-1/2 -translate-x-1/2 z-10 rounded-full"
+            style={{
+              width: '8px', height: '8px',
+              background: 'radial-gradient(circle at 35% 35%, #2a2a2a, #080808)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              boxShadow: '0 0 0 2px rgba(0,0,0,0.4)',
+            }}
+          />
+
+          {/* Screen — tight bezels so the video dominates */}
+          <div
+            className="absolute overflow-hidden bg-black"
+            style={{
+              inset: '5.5% 1.5% 4%',
+              borderRadius: '3px',
+              boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05), 0 0 40px rgba(0,0,0,0.9)',
+            }}
+          >
+            <video
+              ref={videoRef}
+              autoPlay muted loop playsInline preload="metadata"
+              className="absolute inset-0 h-full w-full object-contain"
+              style={{ objectPosition: 'center top', background: '#000' }}
+            />
+            {/* Screen top-edge reflection */}
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0"
+              style={{ height: '25%', background: 'linear-gradient(to bottom, rgba(255,255,255,0.045), transparent)' }}
+            />
+          </div>
+
+          {/* Lid surface sheen */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ background: 'linear-gradient(148deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.01) 35%, transparent 60%)' }}
+          />
+        </div>
+
+        {/* ── Hinge ── */}
+        <div
+          style={{
+            height: '6px',
+            background: 'linear-gradient(to bottom, #0a0a0e, #1c1c22)',
+            borderLeft: '2px solid rgba(255,255,255,0.07)',
+            borderRight: '2px solid rgba(255,255,255,0.07)',
+          }}
+        />
+
+        {/* ── Base (keyboard body) ── */}
+        <div
+          style={{
+            height: '26px',
+            background: 'linear-gradient(to bottom, #2c2c34 0%, #22222a 55%, #18181e 100%)',
+            border: '2px solid rgba(255,255,255,0.09)',
+            borderTop: 'none',
+            borderRadius: '0 0 14px 14px',
+            boxShadow: '0 28px 72px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.05)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Keyboard-row shadow line */}
+          <div
+            style={{
+              position: 'absolute', top: '46%', left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '72%', height: '1.5px',
+              background: 'rgba(255,255,255,0.05)',
+            }}
+          />
+          {/* Foot strip */}
+          <div
+            style={{
+              position: 'absolute', bottom: 0, left: '50%',
+              transform: 'translateX(-50%)',
+              width: '32%', height: '6px',
+              background: 'rgba(0,0,0,0.6)',
+              borderRadius: '0 0 10px 10px',
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Ground shadow / floor reflection */}
+      <div
+        className="pointer-events-none"
+        style={{
+          height: '28px',
+          marginTop: '8px',
+          background: `radial-gradient(ellipse 80% 100% at 50% 0%, ${hex}16 0%, rgba(0,0,0,0.3) 45%, transparent 70%)`,
+          filter: 'blur(8px)',
+        }}
+      />
+    </div>
+  );
 }
 
 function useTheme() {
@@ -133,17 +242,6 @@ function Surface({ children, className = '' }: { children: ReactNode; className?
   );
 }
 
-function LogoPlate({ project, size = 'md' }: { project: Project; size?: 'sm' | 'md' | 'lg' }) {
-  const t = tone(project.accent);
-  const sz = { sm: 'h-10 w-10 rounded-2xl p-2', md: 'h-14 w-14 rounded-[1.25rem] p-2.5', lg: 'h-20 w-20 rounded-[1.6rem] p-3' }[size];
-  return (
-    <span className={`logo-plate ${sz} ${t.bg} ${t.border} ${t.ring} relative grid shrink-0 place-items-center border`}>
-      <span className={`absolute inset-0 rounded-[inherit] bg-gradient-to-br ${t.soft}`} />
-      <img src={project.logo} alt={project.name} className="relative z-10 h-full w-full object-contain drop-shadow-[0_0_10px_rgba(255,255,255,.10)]" />
-    </span>
-  );
-}
-
 /* ─── Nav ────────────────────────────────────────────────────────────────── */
 function Nav({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => void }) {
   const [scrolled, setScrolled] = useState(false);
@@ -155,13 +253,37 @@ function Nav({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => void
   return (
     <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${scrolled ? `border-b backdrop-blur-2xl ${isDark ? 'border-white/[0.06] bg-[#020817]/85' : 'border-black/[0.06] bg-[#f1f5f9]/88'}` : ''}`}>
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8">
-        <a href="#top" className="group flex items-center gap-3">
-          <span className={`grid h-9 w-9 place-items-center rounded-xl border text-[10px] font-black tracking-tight transition-all duration-200 ${isDark ? 'border-cyan-300/[0.18] bg-cyan-300/[0.07] text-cyan-200 group-hover:border-cyan-300/[0.35] group-hover:bg-cyan-300/[0.12]' : 'border-cyan-500/[0.3] bg-cyan-500/[0.08] text-cyan-600 group-hover:border-cyan-500/[0.5] group-hover:bg-cyan-500/[0.15]'}`}>HT</span>
-          <span className={`hidden text-[10px] font-bold uppercase tracking-[0.2em] sm:block ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Hassan Tariq Shafi</span>
+        <a href="#home" className="group flex items-center gap-2.5">
+          {/* HS Forge logomark */}
+          <svg viewBox="0 0 48 56" width="30" height="35" fill="none" aria-hidden="true" className="shrink-0 transition-transform duration-200 group-hover:scale-105">
+            {/* Base — dark left half */}
+            <polygon points="24,1 2,13 2,43 24,55" fill="#12121a" />
+            {/* Right half — fractionally lighter for depth */}
+            <polygon points="24,1 46,13 46,43 24,55" fill="#1a1a26" />
+            {/* Outer border */}
+            <polygon points="24,1 46,13 46,43 24,55 2,43 2,13" fill="none" stroke="rgba(255,255,255,0.13)" strokeWidth="1" />
+            {/* H glyph (left half) */}
+            <text x="12" y="40" textAnchor="middle" fontSize="27" fontWeight="900" fontFamily="Arial Black,Helvetica,sans-serif" fill="rgba(210,215,232,0.88)">H</text>
+            {/* S glyph (right half) */}
+            <text x="36" y="40" textAnchor="middle" fontSize="27" fontWeight="900" fontFamily="Arial Black,Helvetica,sans-serif" fill="rgba(195,202,228,0.80)">S</text>
+            {/* Blue energy split — outer glow */}
+            <line x1="24" y1="2" x2="24" y2="54" stroke="#1d4ed8" strokeWidth="4" opacity="0.45" />
+            {/* Core line */}
+            <line x1="24" y1="2" x2="24" y2="54" stroke="#60a5fa" strokeWidth="1.5" opacity="0.95" />
+            {/* Hot centre */}
+            <line x1="24" y1="8" x2="24" y2="48" stroke="#e0f2fe" strokeWidth="0.65" opacity="0.85" />
+            {/* Top highlight edges */}
+            <line x1="24" y1="1" x2="46" y2="13" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+            <line x1="24" y1="1" x2="2"  y2="13" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+          </svg>
+          {/* Wordmark */}
+          <span className={`text-[15px] font-black tracking-[0.04em] transition-colors duration-200 ${isDark ? 'text-white group-hover:text-cyan-100' : 'text-slate-900 group-hover:text-cyan-700'}`}>
+            HS <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Forge</span>
+          </span>
         </a>
         <div className={`hidden gap-0.5 rounded-full border p-1 md:flex ${isDark ? 'border-white/[0.07] bg-white/[0.02]' : 'border-black/[0.07] bg-black/[0.02]'}`}>
-          {['research', 'work', 'contact'].map(l => (
-            <a key={l} href={`#${l}`} className={`rounded-full px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-all duration-150 ${isDark ? 'hover:bg-white/[0.07] hover:text-white' : 'hover:bg-black/[0.05] hover:text-slate-900'}`}>{l}</a>
+          {([['work', '#work'], ['process', '#process'], ['contact', '#contact']] as [string, string][]).map(([label, href]) => (
+            <a key={label} href={href} className={`rounded-full px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-all duration-150 ${isDark ? 'hover:bg-white/[0.07] hover:text-white' : 'hover:bg-black/[0.05] hover:text-slate-900'}`}>{label}</a>
           ))}
         </div>
         <div className="flex items-center gap-3">
@@ -190,7 +312,7 @@ const fadeUp = {
 
 function Hero({ isDark }: { isDark: boolean }) {
   return (
-    <section id="top" className="relative min-h-screen overflow-hidden">
+    <section id="home" className="relative min-h-screen overflow-hidden">
       <div className={`pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b ${isDark ? 'from-[#020817]/70' : 'from-[#f1f5f9]/70'} to-transparent`} />
       <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t ${isDark ? 'from-[#020817]/60' : 'from-[#f1f5f9]/60'} to-transparent`} />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/[0.04] via-transparent to-cyan-500/[0.04]" />
@@ -204,36 +326,21 @@ function Hero({ isDark }: { isDark: boolean }) {
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-5 pb-24 pt-32 text-center md:px-8">
-        <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible" className="mb-7 flex flex-wrap justify-center gap-2">
-          <span className="chip-badge border-cyan-300/[0.2] bg-cyan-300/[0.06] text-cyan-300">Mathematics + Computing Science</span>
-          <span className="chip-badge border-violet-300/[0.2] bg-violet-300/[0.06] text-violet-300">AI Researcher @ UF</span>
-          <span className="chip-badge border-emerald-300/[0.2] bg-emerald-300/[0.06] text-emerald-300">Quantum direction</span>
-        </motion.div>
-
-        <motion.h1 custom={1} variants={fadeUp} initial="hidden" animate="visible" className="hero-heading max-w-4xl">
-          <span className={`bg-clip-text text-transparent ${isDark ? 'bg-gradient-to-b from-white to-white/80' : 'bg-gradient-to-b from-slate-900 to-slate-700'}`}>Engineering</span>
+        <motion.h1 custom={0} variants={fadeUp} initial="hidden" animate="visible" className="hero-heading max-w-4xl">
+          <span className={`bg-clip-text text-transparent ${isDark ? 'bg-gradient-to-b from-white to-white/80' : 'bg-gradient-to-b from-slate-900 to-slate-700'}`}>I build AI systems</span>
           <br />
-          <span className={`bg-clip-text text-transparent ${isDark ? 'bg-gradient-to-r from-cyan-300 via-white/90 to-violet-300' : 'bg-gradient-to-r from-cyan-500 via-slate-800 to-violet-600'}`}>research ideas</span>
+          <span className={`bg-clip-text text-transparent ${isDark ? 'bg-gradient-to-r from-cyan-300 via-white/90 to-violet-300' : 'bg-gradient-to-r from-cyan-500 via-slate-800 to-violet-600'}`}>that turn messy workflows</span>
           <br />
-          <span className={`bg-clip-text text-transparent ${isDark ? 'bg-gradient-to-b from-white/90 to-white/70' : 'bg-gradient-to-b from-slate-800 to-slate-600'}`}>into real software.</span>
+          <span className={`bg-clip-text text-transparent ${isDark ? 'bg-gradient-to-b from-white/90 to-white/70' : 'bg-gradient-to-b from-slate-800 to-slate-600'}`}>into clean, profitable software.</span>
         </motion.h1>
 
-        <motion.p custom={2} variants={fadeUp} initial="hidden" animate="visible" className={`mt-7 max-w-xl text-base leading-8 md:text-lg ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-          Maths + CS undergraduate at the University of Aberdeen and AI Research Assistant at the University of Florida — building production-grade software from deep learning systems to archival tools and mobile products.
+        <motion.p custom={1} variants={fadeUp} initial="hidden" animate="visible" className={`mt-7 max-w-xl text-base leading-8 md:text-lg ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          I'm Hassan, a Mathematics and Computer Science professional. I will help your startup or business turn repeated manual workload into an automated AI system.
         </motion.p>
 
-        <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible" className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <NeonButton asLink href="#work" variant="primary" size="default">View work</NeonButton>
-          <NeonButton asLink href="https://uk.linkedin.com/in/hassan-tariq-shafi" target="_blank" rel="noopener noreferrer" variant="ghost" size="default">LinkedIn</NeonButton>
-        </motion.div>
-
-        <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible" className="mt-14 grid w-fit grid-cols-2 gap-x-12 gap-y-5 sm:grid-cols-4">
-          {heroMetrics.map(([v, l]) => (
-            <div key={l} className="text-center">
-              <p className={`text-2xl font-black tracking-tight md:text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{v}</p>
-              <p className={`mt-1 text-[9px] font-semibold uppercase tracking-[0.2em] ${isDark ? 'text-slate-600' : 'text-slate-500'}`}>{l}</p>
-            </div>
-          ))}
+        <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible" className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <NeonButton asLink href="#contact" variant="primary" size="default">Work with me</NeonButton>
+          <NeonButton asLink href="#work" variant="ghost" size="default">View case studies</NeonButton>
         </motion.div>
       </div>
 
@@ -244,240 +351,871 @@ function Hero({ isDark }: { isDark: boolean }) {
   );
 }
 
-/* ─── LivePreview ────────────────────────────────────────────────────────── */
-function LivePreview({ project }: { project: Project }) {
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTick(t => (t + 1) % 100), 1800);
-    return () => clearInterval(id);
-  }, []);
-
-  const t = tone(project.accent);
-  const baseBars = {
-    emerald: [42, 54, 70, 64, 82, 60],
-    violet:  [34, 58, 76, 52, 69, 88],
-    amber:   [28, 46, 61, 57, 71, 80],
-    cyan:    [36, 62, 48, 78, 58, 86],
-  }[project.accent];
-
-  const liveBars = baseBars.map((base, i) =>
-    Math.max(10, Math.min(92, base + Math.round(Math.sin((tick * 1.1 + i * 0.9)) * 11)))
-  );
-
+/* ─── VideoCard16x9 ──────────────────────────────────────────────────────── */
+function VideoCard16x9({ src, title, label, description, proof, chips, proves, accent, isDark, idx, useLaptop = false }: {
+  src: string; title: string; label: string; description: string;
+  proof: string[]; chips: string[]; proves: string;
+  accent: Accent; isDark: boolean; idx: number; useLaptop?: boolean;
+}) {
+  const t = tone(accent);
+  const { ref: revealRef, visible } = useReveal();
+  const videoRef = useVideoLazy(src);
   return (
-    <div className="flex flex-col gap-4 p-6" style={{ height: '100%', minHeight: '420px' }}>
-      <div className={`absolute inset-0 bg-gradient-to-br ${t.soft} opacity-80 pointer-events-none`} />
-      <div className="deck-grid absolute inset-0 opacity-25 pointer-events-none" />
+    <div ref={revealRef} className={`reveal ${visible ? 'revealed' : ''}`} style={{ transitionDelay: `${idx * 80}ms` }}>
+      <Surface className="p-0">
+        <div className={`absolute inset-0 bg-gradient-to-br ${t.soft} opacity-40`} />
 
-      <div className="relative flex items-center justify-between gap-3">
-        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Live system preview</p>
-        <span className={`${t.bg} ${t.border} ${t.text} flex-shrink-0 rounded-full border px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.16em]`}>active</span>
-      </div>
+        {useLaptop ? (
+          /* ── Stacked laptop layout: full-width stage on top, info strip below ── */
+          <div className="relative flex flex-col">
 
-      <div className="relative">
-        <h4 className="text-xl font-black leading-tight tracking-tight text-white">{project.sceneLabel}</h4>
-      </div>
-
-      <div className="relative grid grid-cols-3 gap-2">
-        {project.metrics.map(([value, label]) => (
-          <div key={label} className="rounded-xl border border-white/[0.08] bg-black/[0.22] px-3 py-2.5 backdrop-blur-sm">
-            <p className="text-lg font-black leading-none text-white">{value}</p>
-            <p className="mt-1 text-[8px] uppercase leading-none tracking-[0.12em] text-slate-500">{label}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="relative flex flex-1 items-end gap-1.5 rounded-xl border border-white/[0.07] bg-black/[0.15] p-3" style={{ minHeight: '120px' }}>
-        {liveBars.map((h, i) => (
-          <motion.div
-            key={i}
-            className="min-w-0 flex-1 rounded-full"
-            style={{
-              background: `linear-gradient(to top, ${t.hex}55, ${t.hex}ee)`,
-              boxShadow: `0 0 12px ${t.hex}40`,
-            }}
-            animate={{ height: `${h}%` }}
-            transition={{ duration: 0.55, ease: 'easeInOut', delay: i * 0.04 }}
-          />
-        ))}
-      </div>
-
-      <p className={`relative text-center text-[9px] font-black uppercase tracking-[0.2em] ${t.text} opacity-60`}>
-        Press to inspect →
-      </p>
-    </div>
-  );
-}
-
-/* ─── ProjectCard ────────────────────────────────────────────────────────── */
-function ProjectCard({ project, index, open }: { project: Project; index: number; open: (p: Popup) => void }) {
-  const t = tone(project.accent);
-  const { style, onPointerMove, onPointerLeave } = useTilt(6);
-  const { ref, visible } = useReveal();
-  return (
-    <div ref={ref} className={`reveal ${visible ? 'revealed' : ''}`} style={{ transitionDelay: `${index * 60}ms` }}>
-      <Surface className="overflow-hidden p-0">
-        <div className={`absolute inset-0 bg-gradient-to-br ${t.soft} opacity-60`} />
-        <div className="relative flex flex-col xl:flex-row">
-          <div className="flex-1 p-7 md:p-10">
-            <div className="mb-7 flex items-center justify-between gap-4">
-              <span className={`text-[10px] font-black uppercase tracking-[0.28em] ${t.text}`}>0{index + 1} / {project.label}</span>
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.05] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">{project.year}</span>
+            {/* Stage — dark canvas, laptop as hero */}
+            <div
+              className="relative flex items-center justify-center overflow-hidden"
+              style={{ background: '#04040a', padding: 'clamp(2rem,5vw,3.5rem) clamp(1.5rem,5vw,3rem)' }}
+            >
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{ background: `radial-gradient(ellipse 70% 75% at 50% 55%, ${t.hex}16, transparent 68%)` }}
+              />
+              <div className="relative w-full" style={{ maxWidth: '760px' }}>
+                <MacbookMockup videoRef={videoRef} hex={t.hex} />
+              </div>
             </div>
-            <div className="mb-6 flex items-center gap-5">
-              <LogoPlate project={project} />
-              <h3 className="text-4xl font-black tracking-[-0.04em] text-white md:text-5xl">{project.name}</h3>
-            </div>
-            <p className="mb-5 max-w-lg text-base leading-7 text-slate-300">{project.summary}</p>
-            <div className="mb-7 rounded-2xl border border-white/[0.06] bg-black/[0.18] p-4">
-              <p className="mb-2 text-[9px] font-black uppercase tracking-[0.24em] text-slate-500">Impact</p>
-              <p className="text-sm leading-6 text-slate-300">{project.impact}</p>
-            </div>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div>
-                <p className={`mb-3 text-[9px] font-black uppercase tracking-[0.24em] ${t.text}`}>Proof points</p>
-                <ul className="space-y-2">
-                  {project.proof.map(item => (
-                    <li key={item} className="flex items-start gap-2.5 text-sm text-slate-300">
+
+            {/* Info strip */}
+            <div className={`relative flex flex-col gap-6 p-7 md:flex-row md:gap-12 md:p-10 ${isDark ? 'border-t border-white/[0.07]' : 'border-t border-slate-100'}`}>
+              {/* Left: label, title, chips, description */}
+              <div className="flex-1">
+                <span className={`mb-3 block text-[10px] font-black uppercase tracking-[0.28em] ${t.text}`}>{label}</span>
+                <h3 className={`mb-3 text-2xl font-black tracking-[-0.04em] md:text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+                <div className="mb-4 flex flex-wrap gap-1.5">
+                  {chips.map(chip => (
+                    <span key={chip} className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] ${t.text} ${t.border} ${t.bg}`}>
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+                <p className={`text-sm leading-7 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{description}</p>
+              </div>
+
+              {/* Right: proof bullets + proves */}
+              <div className="md:w-[260px] md:shrink-0">
+                <ul className="mb-5 space-y-2">
+                  {proof.map(item => (
+                    <li key={item} className={`flex items-start gap-2.5 text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                       <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: t.hex }} />
                       {item}
                     </li>
                   ))}
                 </ul>
-              </div>
-              <div>
-                <p className={`mb-3 text-[9px] font-black uppercase tracking-[0.24em] ${t.text}`}>Stack</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {project.stack.map(item => (
-                    <span key={item} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-slate-300">{item}</span>
-                  ))}
+                <div className={`border-t pt-4 ${isDark ? 'border-white/[0.07]' : 'border-slate-200'}`}>
+                  <p className={`text-xs leading-5 font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                    <span className={`mr-1.5 font-black ${t.text}`}>→</span>
+                    {proves}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
+        ) : (
+          /* ── Side-by-side flat video layout ── */
+          <div className="relative flex flex-col xl:flex-row">
 
-          <button
-            type="button"
-            className="project-preview-button relative flex min-h-[460px] flex-col xl:w-[460px] xl:shrink-0 xl:border-l xl:border-white/[0.06]"
-            style={style}
-            onPointerMove={onPointerMove}
-            onPointerLeave={onPointerLeave}
-            onClick={() => open({ project })}
-          >
-            <LivePreview project={project} />
-          </button>
+            {/* Info panel */}
+            <div className="flex flex-col justify-center p-7 md:p-10 xl:w-[360px] xl:shrink-0">
+              <span className={`mb-3 block text-[10px] font-black uppercase tracking-[0.28em] ${t.text}`}>{label}</span>
+              <h3 className={`mb-3 text-3xl font-black tracking-[-0.04em] ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+              <div className="mb-5 flex flex-wrap gap-1.5">
+                {chips.map(chip => (
+                  <span key={chip} className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] ${t.text} ${t.border} ${t.bg}`}>
+                    {chip}
+                  </span>
+                ))}
+              </div>
+              <p className={`mb-5 text-sm leading-7 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{description}</p>
+              <ul className="space-y-2">
+                {proof.map(item => (
+                  <li key={item} className={`flex items-start gap-2.5 text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                    <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: t.hex }} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className={`mt-6 border-t pt-5 ${isDark ? 'border-white/[0.07]' : 'border-slate-200'}`}>
+                <p className={`text-xs leading-5 font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                  <span className={`mr-1.5 font-black ${t.text}`}>→</span>
+                  {proves}
+                </p>
+              </div>
+            </div>
+
+            {/* Flat 16/9 video panel */}
+            <div className="relative flex-1 overflow-hidden xl:border-l xl:border-white/[0.06]">
+              <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+                <video
+                  ref={videoRef}
+                  autoPlay muted loop playsInline preload="metadata"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  style={{ filter: 'brightness(0.86) contrast(1.05)' }}
+                />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/35 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/35 to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-black/20 to-transparent" />
+              </div>
+            </div>
+          </div>
+        )}
+      </Surface>
+    </div>
+  );
+}
+
+/* ─── VideoCardPhone ─────────────────────────────────────────────────────── */
+function VideoCardPhone({ src, title, label, description = '', proof = [], sections, chips, proves, accent, isDark }: {
+  src: string; title: string; label: string;
+  description?: string; proof?: string[];
+  sections?: { heading: string; text: string }[];
+  chips: string[]; proves: string;
+  accent: Accent; isDark: boolean;
+}) {
+  const t = tone(accent);
+  const { ref: revealRef, visible } = useReveal();
+  const videoRef = useVideoLazy(src);
+  return (
+    <div ref={revealRef} className={`reveal ${visible ? 'revealed' : ''}`} style={{ transitionDelay: '160ms' }}>
+      <Surface>
+        <div className={`absolute inset-0 bg-gradient-to-br ${t.soft} opacity-40`} />
+        <div className="relative flex flex-col items-center gap-8 p-7 md:p-10 xl:flex-row xl:items-center">
+
+          {/* ── Text panel — 45% on desktop ── */}
+          <div className="w-full xl:w-[45%] xl:shrink-0 xl:pr-4">
+            <span className={`mb-3 block text-[10px] font-black uppercase tracking-[0.28em] ${t.text}`}>{label}</span>
+            <h3 className={`mb-3 text-3xl font-black tracking-[-0.04em] ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+            <div className="mb-5 flex flex-wrap gap-1.5">
+              {chips.map(chip => (
+                <span key={chip} className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] ${t.text} ${t.border} ${t.bg}`}>
+                  {chip}
+                </span>
+              ))}
+            </div>
+            {sections ? (
+              <div className="space-y-4">
+                {sections.map((s, i) => (
+                  <div key={i}>
+                    <p className={`mb-1 text-[11px] font-black uppercase tracking-[0.18em] ${t.text}`}>{s.heading}</p>
+                    <p className={`text-sm leading-6 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{s.text}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                <p className={`mb-5 text-sm leading-7 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{description}</p>
+                <ul className="space-y-2">
+                  {proof.map(item => (
+                    <li key={item} className={`flex items-start gap-2.5 text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: t.hex }} />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <div className={`mt-6 border-t pt-5 ${isDark ? 'border-white/[0.07]' : 'border-slate-200'}`}>
+              <p className={`text-xs leading-5 font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                <span className={`mr-1.5 font-black ${t.text}`}>→</span>
+                {proves}
+              </p>
+            </div>
+          </div>
+
+          {/* ── Phone mockup — 55% on desktop, centred ── */}
+          <div className="relative flex w-full items-center justify-center py-6 xl:w-[55%] xl:shrink-0">
+            {/* Ambient glow blob */}
+            <div
+              className="absolute -z-10 rounded-full blur-[80px] opacity-[0.18]"
+              style={{ width: '340px', height: '340px', background: t.hex }}
+            />
+            {/* Phone frame */}
+            <div
+              className="relative overflow-hidden bg-[#050508]"
+              style={{
+                width: '272px',
+                aspectRatio: '9/19.5',
+                borderRadius: '3.5rem',
+                border: '2.5px solid rgba(255,255,255,0.13)',
+                boxShadow: [
+                  '0 80px 140px rgba(0,0,0,0.58)',
+                  `0 0 80px ${t.hex}1a`,
+                  'inset 0 1px 0 rgba(255,255,255,0.09)',
+                  'inset 0 0 0 1px rgba(255,255,255,0.05)',
+                ].join(', '),
+              }}
+            >
+              {/* Dynamic island */}
+              <div
+                className="absolute top-3.5 left-1/2 -translate-x-1/2 z-20 rounded-full bg-black"
+                style={{ width: '108px', height: '30px' }}
+              />
+              {/* Inner screen ring */}
+              <div
+                className="pointer-events-none absolute inset-0 z-10 rounded-[3.25rem]"
+                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.06)' }}
+              />
+              <video
+                ref={videoRef}
+                autoPlay muted loop playsInline preload="metadata"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              {/* Home bar */}
+              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 h-1 w-20 rounded-full bg-white/25" />
+            </div>
+            {/* Side buttons */}
+            <div className="absolute right-[-5px] top-[130px] h-[68px] w-1 rounded-full bg-white/[0.10]" />
+            <div className="absolute left-[-5px] top-[105px] h-[44px] w-1 rounded-full bg-white/[0.10]" />
+            <div className="absolute left-[-5px] top-[162px] h-[68px] w-1 rounded-full bg-white/[0.10]" />
+          </div>
         </div>
       </Surface>
     </div>
   );
 }
 
-/* ─── SectionHead ────────────────────────────────────────────────────────── */
-function SectionHead({ id, kicker, title, subtitle }: { id: string; kicker: string; title: string; subtitle?: string }) {
-  const { ref, visible } = useReveal();
+/* ─── ProcessSection helpers ─────────────────────────────────────────────── */
+function AnimatedArrow({
+  d, length, color, marker, active, pulse,
+}: {
+  d: string; length: number; color: string; marker: string; active: boolean; pulse: boolean;
+}) {
   return (
-    <div ref={ref} id={id} className={`reveal ${visible ? 'revealed' : ''} scroll-mt-28 mb-12 max-w-3xl`}>
-      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">{kicker}</p>
-      <h2 className="text-4xl font-black tracking-[-0.04em] text-white md:text-6xl">{title}</h2>
-      {subtitle && <p className="mt-4 text-base leading-7 text-slate-400 md:text-lg">{subtitle}</p>}
-    </div>
+    <g>
+      <path
+        d={d}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeDasharray={length}
+        strokeDashoffset={active ? 0 : length}
+        markerEnd={marker}
+        style={{
+          transition: 'stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease, filter 0.4s ease',
+          filter: active ? `drop-shadow(0 0 5px ${color}bb)` : 'none',
+          opacity: active ? 0.88 : 0.11,
+        }}
+      />
+      {pulse && (
+        <circle r="3.5" fill={color} style={{ filter: `drop-shadow(0 0 6px ${color})` }}>
+          <animateMotion dur="1.9s" repeatCount="indefinite" path={d} />
+        </circle>
+      )}
+    </g>
   );
 }
 
-/* ─── ResearchSection ────────────────────────────────────────────────────── */
-function ResearchSection() {
+function ProcessNode({
+  x, y, label, color, active, isDark,
+}: {
+  x: number; y: number; label: string; color: string; active: boolean; isDark: boolean;
+}) {
   return (
-    <section className="py-20 md:py-28">
-      <SectionHead
-        id="research"
-        kicker="research direction"
-        title="A profile built for depth."
-        subtitle="Click any node to explore the areas driving the work — active UF research in equine motion AI, quantum computing, four shipped products, and the mathematical foundations at Aberdeen."
+    <g transform={`translate(${x}, ${y})`}>
+      {/* Outer glow ring */}
+      <circle
+        r={44}
+        fill="none"
+        stroke={color}
+        strokeWidth="1"
+        style={{ opacity: active ? 0.16 : 0, transition: 'opacity 0.6s ease', filter: 'blur(4px)' }}
       />
-      <div className="relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-white/[0.02]">
-        <div className="deck-grid absolute inset-0 opacity-30 pointer-events-none" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-cyan-500/[0.04] via-transparent to-violet-500/[0.04]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.18] to-transparent" />
-        <div className="relative h-[580px] md:h-[660px]">
-          <RadialOrbitalTimeline timelineData={researchOrbitData} />
+      {/* Base circle */}
+      <circle
+        r={32}
+        fill={isDark ? '#080c18' : '#f8fafc'}
+        stroke={color}
+        strokeWidth={active ? 1.5 : 0.4}
+        style={{
+          opacity: active ? 1 : 0.25,
+          transition: 'opacity 0.5s ease, stroke-width 0.4s ease, filter 0.4s ease',
+          filter: active ? `drop-shadow(0 0 12px ${color}55)` : 'none',
+        }}
+      />
+      {/* Accent fill */}
+      <circle
+        r={32}
+        fill={color}
+        style={{ opacity: active ? 0.09 : 0, transition: 'opacity 0.5s ease' }}
+      />
+      {/* Label */}
+      <text
+        textAnchor="middle"
+        dy="0.35em"
+        fontSize="9.5"
+        fontWeight="800"
+        fill={active ? color : isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}
+        style={{ transition: 'fill 0.5s ease', fontFamily: 'inherit', letterSpacing: '0.13em' }}
+      >
+        {label.toUpperCase()}
+      </text>
+    </g>
+  );
+}
+
+/* ─── ProcessSection ─────────────────────────────────────────────────────── */
+function ProcessSection({ isDark }: { isDark: boolean }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [step, setStep] = useState(-1);
+  const hasRun = useRef(false);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasRun.current) {
+          hasRun.current = true;
+          // step 0: Define  1: arrow→Build  2: Build  3: arrow→Review
+          // step 4: Review  5: arrow→Improve  6: Improve  7: return arrow  8: "next cycle"
+          const delays = [120, 600, 1100, 1580, 2080, 2560, 3060, 3560, 4420];
+          delays.forEach((ms, i) => setTimeout(() => setStep(i), ms));
+        }
+      },
+      { threshold: 0.22 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const on = (s: number) => step >= s;
+
+  // 2×2 circuit layout inside viewBox "0 0 560 330"
+  // Define(140,80) → Build(420,80)
+  //     ↑                   ↓
+  // Improve(140,240) ← Review(420,240)
+  //
+  // Node radius: 32px  ·  Arrow starts 35px from center
+
+  const arrows = [
+    { d: 'M 175,80  L 382,80',  len: 207, color: '#22d3ee', marker: 'url(#prc-c)', aS: 1, pS: 2 },
+    { d: 'M 420,115 L 420,205', len: 90,  color: '#a78bfa', marker: 'url(#prc-v)', aS: 3, pS: 4 },
+    { d: 'M 385,240 L 178,240', len: 207, color: '#a78bfa', marker: 'url(#prc-v)', aS: 5, pS: 6 },
+    { d: 'M 140,205 L 140,115', len: 90,  color: '#22d3ee', marker: 'url(#prc-c)', aS: 7, pS: 8 },
+  ];
+
+  const nodes = [
+    { label: 'Define',  x: 140, y: 80,  color: '#22d3ee', nS: 0 },
+    { label: 'Build',   x: 420, y: 80,  color: '#a78bfa', nS: 2 },
+    { label: 'Review',  x: 420, y: 240, color: '#a78bfa', nS: 4 },
+    { label: 'Improve', x: 140, y: 240, color: '#22d3ee', nS: 6 },
+  ];
+
+  const descriptions = [
+    { label: 'Define',  desc: 'Clarify the workflow' },
+    { label: 'Build',   desc: 'Create the first useful version' },
+    { label: 'Review',  desc: 'Test with real feedback' },
+    { label: 'Improve', desc: 'Refine and repeat' },
+  ];
+
+  return (
+    <section id="process" className="py-20 md:py-28 scroll-mt-20">
+      {/* Heading */}
+      <div className="mb-14 text-center">
+        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">process</p>
+        <h2 className={`text-[2.4rem] font-black leading-[1.05] tracking-[-0.04em] md:text-5xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
+          The System Loop
+        </h2>
+        <p className={`mx-auto mt-4 max-w-[460px] text-base leading-7 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          Define the workflow, build the first useful version, review it, then improve through the next cycle.
+        </p>
+      </div>
+
+      {/* Glass card */}
+      <div ref={cardRef} className="mx-auto max-w-[640px]">
+        <div
+          className={`relative overflow-hidden rounded-[2rem] border backdrop-blur-xl ${isDark ? 'border-white/[0.08] bg-white/[0.025]' : 'border-slate-200/80 bg-white/60'}`}
+          style={{
+            boxShadow: isDark
+              ? '0 40px 120px -30px rgba(0,0,0,0.8), 0 0 0 0.5px rgba(255,255,255,0.04) inset, inset 0 1px 0 rgba(255,255,255,0.07)'
+              : '0 40px 120px -30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.9)',
+          }}
+        >
+          {/* Dot grid */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage: `radial-gradient(circle, ${isDark ? 'rgba(255,255,255,0.032)' : 'rgba(0,0,0,0.032)'} 1px, transparent 1px)`,
+              backgroundSize: '28px 28px',
+            }}
+          />
+          {/* Centre radial glow */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ background: 'radial-gradient(ellipse 62% 52% at 50% 50%, rgba(34,211,238,0.048), transparent 64%)' }}
+          />
+          {/* Top-edge shine */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.18] to-transparent" />
+
+          {/* SVG diagram */}
+          <div className="flex justify-center px-4 py-12 sm:px-8 md:px-12">
+            <svg
+              viewBox="0 0 560 330"
+              aria-hidden="true"
+              className="w-full"
+              style={{ maxWidth: '500px', overflow: 'visible' }}
+            >
+              <defs>
+                <marker id="prc-c" markerWidth="6" markerHeight="6" refX="5.2" refY="3" orient="auto">
+                  <path d="M0,0.5 L5.5,3 L0,5.5 Z" fill="#22d3ee" />
+                </marker>
+                <marker id="prc-v" markerWidth="6" markerHeight="6" refX="5.2" refY="3" orient="auto">
+                  <path d="M0,0.5 L5.5,3 L0,5.5 Z" fill="#a78bfa" />
+                </marker>
+              </defs>
+
+              {/* Arrows */}
+              {arrows.map((a, i) => (
+                <AnimatedArrow
+                  key={i}
+                  d={a.d}
+                  length={a.len}
+                  color={a.color}
+                  marker={a.marker}
+                  active={on(a.aS)}
+                  pulse={on(a.pS)}
+                />
+              ))}
+
+              {/* "next cycle" label — rotated along the left return arrow */}
+              <text
+                x="52"
+                y="160"
+                textAnchor="middle"
+                fontSize="7.5"
+                fontWeight="700"
+                fill="#22d3ee"
+                transform="rotate(-90, 52, 160)"
+                style={{
+                  opacity: on(8) ? 0.6 : 0,
+                  transition: 'opacity 0.9s ease 0.4s',
+                  fontFamily: 'inherit',
+                  letterSpacing: '0.16em',
+                }}
+              >
+                NEXT CYCLE
+              </text>
+
+              {/* Nodes */}
+              {nodes.map(n => (
+                <ProcessNode
+                  key={n.label}
+                  x={n.x}
+                  y={n.y}
+                  label={n.label}
+                  color={n.color}
+                  active={on(n.nS)}
+                  isDark={isDark}
+                />
+              ))}
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* 4-column step descriptions */}
+      <div className="mx-auto mt-7 grid max-w-[640px] grid-cols-2 gap-3 md:grid-cols-4">
+        {descriptions.map(({ label, desc }) => (
+          <div
+            key={label}
+            className={`rounded-xl border p-4 ${isDark ? 'border-white/[0.06] bg-white/[0.018]' : 'border-slate-200 bg-white/50'}`}
+          >
+            <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-400">{label}</p>
+            <p className={`text-[11px] leading-[1.5] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ─── ProofSection ───────────────────────────────────────────────────────── */
+function ProofSection({ isDark }: { isDark: boolean }) {
+  const { ref: headerRef, visible: headerVis } = useReveal();
+  return (
+    <section id="work" className="py-20 md:py-28 scroll-mt-20">
+      <div ref={headerRef} className={`reveal ${headerVis ? 'revealed' : ''} mb-14 max-w-2xl`}>
+        <p className="mb-3 text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">proof of work</p>
+        <h2 className={`text-[2.4rem] font-black leading-[1.05] tracking-[-0.04em] md:text-5xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
+          Systems I've already built
+        </h2>
+        <p className={`mt-4 text-base leading-7 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          Real software. Real workflows. Real product execution.
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        <VideoCard16x9
+          src={labSafeVideo}
+          title="LabSafe"
+          label="Research workflow system"
+          description="A lab management system replacing spreadsheet and email-based workflows with structured records, request flows, and lineage visualisation."
+          proof={['Role-based access', 'Structured request workflows', 'Lineage visualisation']}
+          chips={['Research ops', 'RBAC', 'Lineage']}
+          proves="Proves I can build structured systems for complex real-world workflows."
+          accent="emerald" isDark={isDark} idx={0} useLaptop
+        />
+        <VideoCard16x9
+          src={metaShiftVideo}
+          title="MetaShift"
+          label="Metadata automation tool"
+          description="A workflow automation tool that turns messy image folders and catalogue metadata into matched, organised, export-ready batches."
+          proof={['Metadata matching', 'Duplicate and missing-record detection', 'Organised batch export']}
+          chips={['Automation', 'Metadata', 'Batch export']}
+          proves="Proves I can turn repeated manual work into automation."
+          accent="violet" isDark={isDark} idx={1} useLaptop
+        />
+        <VideoCardPhone
+          src={gatorParkVideo}
+          title="GatorPark"
+          label="Published mobile product"
+          sections={[
+            { heading: 'Published iOS product', text: 'Live parking availability with check-in/check-out flows.' },
+            { heading: 'System behaviour',       text: 'Firebase-powered updates with a privacy-minimal user flow.' },
+          ]}
+          chips={['iOS', 'Firebase', 'App Store']}
+          proves="Proves I can ship user-facing software."
+          accent="cyan" isDark={isDark}
+        />
+      </div>
+
+      <div className="mt-12">
+        <p className={`mb-5 text-[10px] font-black uppercase tracking-[0.28em] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+          Built, shipped, and used
+        </p>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {proofRow.map(([label, sub]) => (
+            <div key={label} className={`rounded-2xl border p-4 ${isDark ? 'border-white/[0.06] bg-white/[0.025]' : 'border-slate-200 bg-slate-100/50'}`}>
+              <p className={`text-sm font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{label}</p>
+              <p className={`mt-1 text-[11px] font-medium leading-relaxed ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{sub}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-/* ─── Popup ──────────────────────────────────────────────────────────────── */
-function PopupLayer({ popup, close }: { popup: Popup; close: () => void }) {
-  const { style, onPointerMove, onPointerLeave } = useTilt(7);
-  useEffect(() => {
-    if (!popup) return;
-    const listener = (e: KeyboardEvent) => e.key === 'Escape' && close();
-    window.addEventListener('keydown', listener);
-    document.body.style.overflow = 'hidden';
-    return () => { window.removeEventListener('keydown', listener); document.body.style.overflow = ''; };
-  }, [popup, close]);
+/* ─── PublicProofSection ─────────────────────────────────────────────────── */
+const liCaptions = [
+  'Mitacs @ UofT',
+  'MetaShift & Archivault',
+  'GatorPark Launch',
+  'ICNA Volunteering',
+  'Florida Experience',
+  'AI Research Progress',
+  'Charity Match',
+  'LTW / CheckBot',
+  'AI Product Integration',
+];
 
-  if (!popup) return null;
-  const t = tone(popup.project.accent);
+function PublicProofSection({ isDark }: { isDark: boolean }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const activeIdxRef = useRef(0);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const { ref: revealRef, visible } = useReveal();
+
+  function goTo(idx: number) {
+    const el = scrollRef.current;
+    if (!el) return;
+    const clamped = Math.max(0, Math.min(linkedInCards.length - 1, idx));
+    activeIdxRef.current = clamped;
+    setActiveIdx(clamped);
+    el.scrollTo({ left: clamped * el.offsetWidth, behavior: 'smooth' });
+  }
+
+  function handleScroll() {
+    const el = scrollRef.current;
+    if (!el || el.offsetWidth === 0) return;
+    const idx = Math.round(el.scrollLeft / el.offsetWidth);
+    const clamped = Math.max(0, Math.min(linkedInCards.length - 1, idx));
+    activeIdxRef.current = clamped;
+    setActiveIdx(clamped);
+  }
+
+  // Re-snap to correct slide after a window resize so scroll position stays accurate.
+  useEffect(() => {
+    function onResize() {
+      const el = scrollRef.current;
+      if (!el) return;
+      el.scrollTo({ left: activeIdxRef.current * el.offsetWidth, behavior: 'instant' as ScrollBehavior });
+    }
+    window.addEventListener('resize', onResize, { passive: true });
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const canPrev = activeIdx > 0;
+  const canNext = activeIdx < linkedInCards.length - 1;
+
+  const arrowCls = (enabled: boolean) =>
+    `flex h-10 w-10 items-center justify-center rounded-full border text-lg font-bold transition-all duration-200 ${
+      enabled
+        ? isDark
+          ? 'border-white/[0.14] bg-black/50 text-white backdrop-blur-md hover:border-cyan-300/40 hover:text-cyan-300'
+          : 'border-black/[0.1] bg-white/70 text-slate-700 backdrop-blur-md hover:border-cyan-500/40 hover:text-cyan-600'
+        : 'cursor-not-allowed border-white/[0.05] bg-black/20 text-white/20'
+    }`;
+
   return (
-    <div className="popup-backdrop fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-8" onClick={close}>
-      <div className="popup-perspective w-full max-w-6xl" onClick={e => e.stopPropagation()}>
-        <div className={`popup-card popup-card-bg ${t.ring} relative max-h-[92vh] overflow-hidden rounded-[2rem] border border-white/[0.12] bg-[#030c1e]/94 backdrop-blur-2xl`} style={style} onPointerMove={onPointerMove} onPointerLeave={onPointerLeave}>
-          <button type="button" onClick={close} className="absolute right-5 top-5 z-20 rounded-full border border-white/[0.08] bg-white/[0.06] px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300 hover:bg-white/[0.12]">close</button>
-          <div className={`absolute inset-0 bg-gradient-to-br ${t.soft} opacity-40`} />
-          <div className="popup-grid absolute inset-0 opacity-50" />
-          <div className="relative z-10 max-h-[92vh] overflow-y-auto p-6 md:p-10">
-            <ProjectPopup project={popup.project} />
+    <section id="proof" className="py-20 md:py-28 scroll-mt-20">
+      {/* Heading */}
+      <div ref={revealRef} className={`reveal ${visible ? 'revealed' : ''} mb-12 text-center`}>
+        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">public proof</p>
+        <h2 className={`text-[2.4rem] font-black leading-[1.05] tracking-[-0.04em] md:text-5xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
+          Shared publicly, backed by real work
+        </h2>
+        <p className={`mx-auto mt-4 max-w-[480px] text-base leading-7 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          Research, shipped products, and build milestones documented on LinkedIn.
+        </p>
+      </div>
+
+      {/* Tablet showcase — centred, max 1100px */}
+      <div className="relative mx-auto" style={{ maxWidth: 'min(1100px, 100%)' }}>
+
+        {/* ── iPad/tablet outer bezel ── */}
+        <div
+          className="relative"
+          style={{
+            borderRadius: '2.8rem',
+            background: isDark
+              ? 'linear-gradient(155deg, #2e2e3a 0%, #1e1e28 50%, #131318 100%)'
+              : 'linear-gradient(155deg, #dddde6 0%, #cacad4 50%, #b8b8c2 100%)',
+            border: `2px solid ${isDark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.12)'}`,
+            boxShadow: isDark
+              ? '0 48px 120px -24px rgba(0,0,0,0.85), 0 0 0 0.5px rgba(255,255,255,0.04) inset, inset 0 1px 0 rgba(255,255,255,0.08)'
+              : '0 48px 120px -24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.9)',
+            padding: '22px 16px 34px',
+          }}
+        >
+          {/* Camera */}
+          <div className="mb-[10px] flex justify-center">
+            <div
+              style={{
+                width: '9px', height: '9px', borderRadius: '50%',
+                background: isDark ? '#18181e' : '#aaaabc',
+                border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.15)'}`,
+                boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,0.05)' : 'none',
+              }}
+            />
+          </div>
+
+          {/* Screen */}
+          <div
+            className="relative overflow-hidden"
+            style={{
+              borderRadius: '1.4rem',
+              height: 'clamp(460px, 62vh, 880px)',
+              background: '#000',
+              boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.06)',
+            }}
+          >
+            {/* LinkedIn badge — top-right of screen */}
+            <div className="pointer-events-none absolute right-3 top-3 z-10">
+              <span className="rounded-full border border-[#0a66c2]/50 bg-[#0a66c2]/25 px-2.5 py-[3px] text-[9px] font-black uppercase tracking-[0.12em] text-[#7ab8f5]">
+                LinkedIn
+              </span>
+            </div>
+
+            {/* Counter badge — top-left */}
+            <div className="pointer-events-none absolute left-3 top-3 z-10">
+              <span className={`rounded-full border px-2.5 py-[3px] text-[9px] font-black uppercase tracking-[0.12em] ${isDark ? 'border-white/[0.12] bg-black/50 text-white/50' : 'border-white/60 bg-white/70 text-slate-500'}`}>
+                {String(activeIdx + 1).padStart(2, '0')} / {String(linkedInCards.length).padStart(2, '0')}
+              </span>
+            </div>
+
+            {/* Prev arrow — overlaid on screen */}
+            <button
+              onClick={() => goTo(activeIdx - 1)}
+              disabled={!canPrev}
+              aria-label="Previous post"
+              className={`absolute left-3 top-1/2 z-20 -translate-y-1/2 ${arrowCls(canPrev)}`}
+            >
+              ‹
+            </button>
+
+            {/* Next arrow — overlaid on screen */}
+            <button
+              onClick={() => goTo(activeIdx + 1)}
+              disabled={!canNext}
+              aria-label="Next post"
+              className={`absolute right-3 top-1/2 z-20 -translate-y-1/2 ${arrowCls(canNext)}`}
+            >
+              ›
+            </button>
+
+            {/* Horizontal scroll container */}
+            <div
+              ref={scrollRef}
+              onScroll={handleScroll}
+              className="no-scrollbar flex h-full"
+              style={{ overflowX: 'auto', scrollSnapType: 'x mandatory', scrollbarWidth: 'none' }}
+            >
+              {linkedInCards.map((card, i) => (
+                <div
+                  key={i}
+                  className="flex h-full w-full flex-shrink-0 items-start justify-center"
+                  style={{
+                    scrollSnapAlign: 'start',
+                    background: isDark ? '#070d1a' : '#eef2f7',
+                    padding: '14px 14px 10px',
+                  }}
+                >
+                  <img
+                    src={card.img}
+                    alt={liCaptions[i]}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    style={{
+                      display: 'block',
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      objectPosition: 'center top',
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Screen-edge inner ring */}
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ borderRadius: '1.4rem', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.07)' }}
+            />
+          </div>
+
+          {/* Home bar */}
+          <div className="mt-4 flex justify-center">
+            <div
+              style={{
+                width: '110px', height: '5px', borderRadius: '3px',
+                background: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)',
+              }}
+            />
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
 
-function ProjectPopup({ project }: { project: Project }) {
-  const t = tone(project.accent);
-  return (
-    <div className="space-y-8">
-      <div className="flex items-start gap-5 pr-16">
-        <LogoPlate project={project} size="lg" />
-        <div>
-          <p className={`mb-3 text-[10px] font-black uppercase tracking-[0.28em] ${t.text}`}>project deep view</p>
-          <h3 className="text-4xl font-black tracking-[-0.05em] text-white md:text-6xl">{project.name}</h3>
-          <p className="mt-4 max-w-3xl text-base leading-8 text-slate-300">{project.summary}</p>
-        </div>
-      </div>
-      <div className="grid gap-5 xl:grid-cols-2">
-        <div className="overflow-hidden rounded-[2rem] border border-white/[0.08] bg-white/[0.035]">
-          <LivePreview project={project} />
-        </div>
-        <div className="space-y-4">
-          <Surface className="p-6">
-            <p className="mb-3 text-[9px] font-black uppercase tracking-[0.24em] text-cyan-300">Impact</p>
-            <p className="text-sm leading-7 text-slate-300">{project.impact}</p>
-          </Surface>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {project.story.map((item, i) => (
-              <Surface key={item} className="p-5">
-                <p className={`mb-2 text-xs font-black ${t.text}`}>0{i + 1}</p>
-                <p className="text-sm leading-6 text-slate-300">{item}</p>
-              </Surface>
+        {/* ── Caption + dot progress ── */}
+        <div className="mt-6 flex flex-col items-center gap-3">
+          <p className={`text-[12px] font-semibold tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            {liCaptions[activeIdx]}
+          </p>
+          <div className="flex items-center gap-1.5">
+            {linkedInCards.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                aria-label={`Go to ${liCaptions[i]}`}
+                className="rounded-full transition-all duration-300"
+                style={{
+                  height: '6px',
+                  width: i === activeIdx ? '20px' : '6px',
+                  background: i === activeIdx
+                    ? '#22d3ee'
+                    : i < activeIdx
+                    ? 'rgba(34,211,238,0.3)'
+                    : isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+                }}
+              />
             ))}
           </div>
         </div>
       </div>
-    </div>
+    </section>
+  );
+}
+
+/* ─── EnquirySection ─────────────────────────────────────────────────────── */
+function EnquirySection({ isDark }: { isDark: boolean }) {
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const { ref, visible } = useReveal();
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const body = `Name: ${form.name}\nEmail: ${form.email}\n\nWhat I want built:\n${form.message}`;
+    window.location.href = `mailto:hassantariq233@gmail.com?subject=Build Request&body=${encodeURIComponent(body)}`;
+  }
+
+  const inputCls = `w-full rounded-xl border bg-transparent px-4 py-3 text-sm outline-none transition-colors duration-150 ${
+    isDark
+      ? 'border-white/[0.1] text-white placeholder:text-slate-600 focus:border-cyan-300/[0.4]'
+      : 'border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-cyan-500/[0.4]'
+  }`;
+
+  return (
+    <section id="contact" className="py-20 md:py-28 scroll-mt-20">
+      {/* Section header */}
+      <div ref={ref} className={`reveal ${visible ? 'revealed' : ''} mb-12 text-center`}>
+        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">services</p>
+        <h2 className={`text-3xl font-black tracking-[-0.03em] md:text-4xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
+          Build systems, automation,{' '}
+          <span className="block sm:inline">and internal tools</span>
+        </h2>
+        <p className={`mx-auto mt-4 max-w-[480px] text-sm leading-7 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          If you need software, automation, or workflow systems built properly, send a short note and we can discuss the right scope together.
+        </p>
+      </div>
+
+      {/* Enquiry card */}
+      <div className="mx-auto max-w-[560px]">
+        <Surface className="p-7 md:p-10">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            <input
+              type="text"
+              placeholder="Name"
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              required
+              className={inputCls}
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={form.email}
+              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+              required
+              className={inputCls}
+            />
+            <textarea
+              placeholder="What do you want built?"
+              value={form.message}
+              onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+              required
+              rows={4}
+              className={`${inputCls} resize-none`}
+            />
+            <div className="pt-1">
+              <NeonButton type="submit" variant="primary" size="default" className="w-full">
+                Request a build call
+              </NeonButton>
+              <p className={`mt-3 text-center text-[11px] leading-5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                If it looks like a fit, I'll get back to you to arrange a call.
+              </p>
+            </div>
+          </form>
+        </Surface>
+      </div>
+    </section>
   );
 }
 
 /* ─── App ────────────────────────────────────────────────────────────────── */
 export function App() {
   const { isDark, toggle } = useTheme();
-  const [popup, setPopup] = useState<Popup>(null);
   return (
     <div className={`relative min-h-screen overflow-x-hidden transition-colors duration-300 selection:bg-cyan-200 selection:text-slate-950 ${isDark ? 'bg-[#020817] text-slate-100' : 'bg-[#f1f5f9] text-slate-900'}`}>
       <div className="pointer-events-none fixed inset-0 -z-20">
-        <AnoAI className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isDark ? 'opacity-[0.32]' : 'opacity-[0.10]'}`} />
+        <Suspense fallback={null}>
+          <AnoAI className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isDark ? 'opacity-[0.32]' : 'opacity-[0.10]'}`} />
+        </Suspense>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_15%_8%,rgba(34,211,238,.06),transparent_32%),radial-gradient(ellipse_at_78%_12%,rgba(168,85,247,.05),transparent_30%),radial-gradient(ellipse_at_85%_80%,rgba(16,185,129,.05),transparent_30%)]" />
         <div className="dot-grid absolute inset-0 opacity-[0.22]" />
         <div className="noise absolute inset-0 opacity-[0.04]" />
@@ -487,30 +1225,11 @@ export function App() {
       <Hero isDark={isDark} />
 
       <main className="mx-auto max-w-7xl px-5 md:px-8">
-        <ResearchSection />
+        <ProofSection isDark={isDark} />
+        <PublicProofSection isDark={isDark} />
+        <ProcessSection isDark={isDark} />
 
-        <section className="py-20 md:py-28">
-          <SectionHead id="work" kicker="selected systems" title="Four builds, one technical signature." subtitle="A lab information system, a metadata automation tool, an archival integrity verifier, and a live iOS app — all built with the same standard of depth and precision." />
-          <div className="space-y-6">
-            {projects.map((p, i) => <ProjectCard key={p.name} project={p} index={i} open={setPopup} />)}
-          </div>
-        </section>
-
-        <section className="py-20 md:py-28">
-          <Surface className="p-8 md:p-14">
-            <div className="flex flex-col justify-between gap-10 md:flex-row md:items-center">
-              <div>
-                <p className="mb-4 text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">next move</p>
-                <h2 id="contact" className="scroll-mt-28 max-w-lg text-3xl font-black tracking-tight text-white md:text-5xl">Build the thing between research and real-world use.</h2>
-                <p className="mt-5 max-w-xl text-base leading-7 text-slate-400">Based in Aberdeen, Scotland. Open to research-aligned engineering roles, AI/ML internships, summer placements, and technical collaborations where depth and precision matter.</p>
-              </div>
-              <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
-                <NeonButton asLink href="mailto:hassantariq233@gmail.com" variant="primary">Email</NeonButton>
-                <NeonButton asLink href="https://uk.linkedin.com/in/hassan-tariq-shafi" target="_blank" rel="noopener noreferrer" variant="ghost">LinkedIn</NeonButton>
-              </div>
-            </div>
-          </Surface>
-        </section>
+        <EnquirySection isDark={isDark} />
       </main>
 
       <PortfolioFooter />
@@ -519,7 +1238,6 @@ export function App() {
         <InteractiveMenu />
       </div>
 
-      <PopupLayer popup={popup} close={() => setPopup(null)} />
     </div>
   );
 }

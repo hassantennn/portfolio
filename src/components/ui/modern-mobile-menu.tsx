@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Home, Briefcase, FlaskConical, Mail } from 'lucide-react';
+import { Home, Briefcase, RefreshCw, Mail } from 'lucide-react';
 
 type IconComponentType = React.ElementType<{ className?: string }>;
 
@@ -15,10 +15,10 @@ export interface InteractiveMenuProps {
 }
 
 const defaultItems: InteractiveMenuItem[] = [
-  { label: 'home',     icon: Home,         href: '#top' },
-  { label: 'research', icon: FlaskConical, href: '#research' },
-  { label: 'work',     icon: Briefcase,    href: '#work' },
-  { label: 'contact',  icon: Mail,         href: '#contact' },
+  { label: 'home',    icon: Home,       href: '#home' },
+  { label: 'work',    icon: Briefcase,  href: '#work' },
+  { label: 'process', icon: RefreshCw,  href: '#process' },
+  { label: 'contact', icon: Mail,       href: '#contact' },
 ];
 
 const InteractiveMenu: React.FC<InteractiveMenuProps> = ({ items, accentColor = 'rgb(34,211,238)' }) => {
