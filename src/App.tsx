@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState, lazy, Suspense, type ReactNode, type FormEvent, type RefObject } from 'react';
 import { motion } from 'framer-motion';
 import { Sun, Moon } from 'lucide-react';
-import labSafeVideo from './assets/walkthrough_labsafe.mp4';
-import metaShiftVideo from './assets/walkthrough_metashift.mov';
-import gatorParkVideo from './assets/walkthrough_gatorpark.mov';
+import labSafeVideo from './assets/walkthrough_labsafe_web.mp4';
+import metaShiftVideo from './assets/walkthrough_metashift_web.mp4';
+import gatorParkVideo from './assets/walkthrough_gatorpark_web.mp4';
+import posterLabSafe from './assets/poster_labsafe.jpg';
+import posterMetaShift from './assets/poster_metashift.jpg';
+import posterGatorPark from './assets/poster_gatorpark.jpg';
 import link1 from './assets/link1.png';
 import link2 from './assets/link2.png';
 import link3 from './assets/link3.png';
@@ -88,7 +91,7 @@ function useVideoLazy(src: string) {
 }
 
 /* ─── MacbookMockup ──────────────────────────────────────────────────────── */
-function MacbookMockup({ videoRef, hex }: { videoRef: RefObject<HTMLVideoElement>; hex: string }) {
+function MacbookMockup({ videoRef, hex, poster }: { videoRef: RefObject<HTMLVideoElement>; hex: string; poster?: string }) {
   return (
     <div className="relative w-full" style={{ perspective: '1400px' }}>
       {/* Diffuse glow behind device */}
@@ -144,7 +147,8 @@ function MacbookMockup({ videoRef, hex }: { videoRef: RefObject<HTMLVideoElement
           >
             <video
               ref={videoRef}
-              autoPlay muted loop playsInline preload="metadata"
+              autoPlay muted loop playsInline preload="none"
+              poster={poster}
               className="absolute inset-0 h-full w-full object-contain"
               style={{ objectPosition: 'center top', background: '#000' }}
             />
@@ -352,8 +356,8 @@ function Hero({ isDark }: { isDark: boolean }) {
 }
 
 /* ─── VideoCard16x9 ──────────────────────────────────────────────────────── */
-function VideoCard16x9({ src, title, label, description, proof, chips, proves, accent, isDark, idx, useLaptop = false }: {
-  src: string; title: string; label: string; description: string;
+function VideoCard16x9({ src, poster, title, label, description, proof, chips, proves, accent, isDark, idx, useLaptop = false }: {
+  src: string; poster?: string; title: string; label: string; description: string;
   proof: string[]; chips: string[]; proves: string;
   accent: Accent; isDark: boolean; idx: number; useLaptop?: boolean;
 }) {
@@ -379,7 +383,7 @@ function VideoCard16x9({ src, title, label, description, proof, chips, proves, a
                 style={{ background: `radial-gradient(ellipse 70% 75% at 50% 55%, ${t.hex}16, transparent 68%)` }}
               />
               <div className="relative w-full" style={{ maxWidth: '760px' }}>
-                <MacbookMockup videoRef={videoRef} hex={t.hex} />
+                <MacbookMockup videoRef={videoRef} hex={t.hex} poster={poster} />
               </div>
             </div>
 
@@ -455,7 +459,8 @@ function VideoCard16x9({ src, title, label, description, proof, chips, proves, a
               <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
                 <video
                   ref={videoRef}
-                  autoPlay muted loop playsInline preload="metadata"
+                  autoPlay muted loop playsInline preload="none"
+                  poster={poster}
                   className="absolute inset-0 h-full w-full object-cover"
                   style={{ filter: 'brightness(0.86) contrast(1.05)' }}
                 />
@@ -472,8 +477,8 @@ function VideoCard16x9({ src, title, label, description, proof, chips, proves, a
 }
 
 /* ─── VideoCardPhone ─────────────────────────────────────────────────────── */
-function VideoCardPhone({ src, title, label, description = '', proof = [], sections, chips, proves, accent, isDark }: {
-  src: string; title: string; label: string;
+function VideoCardPhone({ src, poster, title, label, description = '', proof = [], sections, chips, proves, accent, isDark }: {
+  src: string; poster?: string; title: string; label: string;
   description?: string; proof?: string[];
   sections?: { heading: string; text: string }[];
   chips: string[]; proves: string;
@@ -564,7 +569,8 @@ function VideoCardPhone({ src, title, label, description = '', proof = [], secti
               />
               <video
                 ref={videoRef}
-                autoPlay muted loop playsInline preload="metadata"
+                autoPlay muted loop playsInline preload="none"
+                poster={poster}
                 className="absolute inset-0 h-full w-full object-cover"
               />
               {/* Home bar */}
@@ -855,6 +861,7 @@ function ProofSection({ isDark }: { isDark: boolean }) {
       <div className="space-y-6">
         <VideoCard16x9
           src={labSafeVideo}
+          poster={posterLabSafe}
           title="LabSafe"
           label="Research workflow system"
           description="A lab management system replacing spreadsheet and email-based workflows with structured records, request flows, and lineage visualisation."
@@ -865,6 +872,7 @@ function ProofSection({ isDark }: { isDark: boolean }) {
         />
         <VideoCard16x9
           src={metaShiftVideo}
+          poster={posterMetaShift}
           title="MetaShift"
           label="Metadata automation tool"
           description="A workflow automation tool that turns messy image folders and catalogue metadata into matched, organised, export-ready batches."
@@ -875,6 +883,7 @@ function ProofSection({ isDark }: { isDark: boolean }) {
         />
         <VideoCardPhone
           src={gatorParkVideo}
+          poster={posterGatorPark}
           title="GatorPark"
           label="Published mobile product"
           sections={[
