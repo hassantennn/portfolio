@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState, lazy, Suspense, type ReactNode, type FormEvent, type RefObject } from 'react';
-import { motion } from 'framer-motion';
-import { Sun, Moon } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { Home, Briefcase, Award, Workflow, Mail, Sun, Moon } from 'lucide-react';
+import { AnimatedThemeToggler } from './components/ui/animated-theme-toggler';
+import { Dock, DockIcon } from './components/ui/dock';
+import { PixelCanvas } from './components/ui/pixel-canvas';
 import labSafeVideo from './assets/walkthrough_labsafe_web.mp4';
 import metaShiftVideo from './assets/walkthrough_metashift_web.mp4';
 import gatorParkVideo from './assets/walkthrough_gatorpark_web.mp4';
@@ -20,8 +23,9 @@ import { ElegantShape } from './components/ui/shape-landing-hero';
 import { NeonButton } from './components/ui/neon-button';
 import { PortfolioFooter } from './components/ui/footer-section';
 import { InteractiveMenu } from './components/ui/modern-mobile-menu';
+import { ContainerScroll } from './components/ui/container-scroll-animation';
 
-const AnoAI = lazy(() => import('./components/ui/animated-shader-background'));
+const DottedSurface = lazy(() => import('./components/ui/dotted-surface'));
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 type Accent = 'emerald' | 'violet' | 'amber' | 'cyan';
@@ -246,62 +250,59 @@ function Surface({ children, className = '' }: { children: ReactNode; className?
   );
 }
 
-/* ─── Nav ────────────────────────────────────────────────────────────────── */
-function Nav({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => void }) {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handler, { passive: true });
-    return () => window.removeEventListener('scroll', handler);
-  }, []);
+/* ─── Logo mark (shared) ─────────────────────────────────────────────────── */
+function LogoMark({ isDark }: { isDark: boolean }) {
   return (
-    <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${scrolled ? `border-b backdrop-blur-2xl ${isDark ? 'border-white/[0.06] bg-[#020817]/85' : 'border-black/[0.06] bg-[#f1f5f9]/88'}` : ''}`}>
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8">
-        <a href="#home" className="group flex items-center gap-2.5">
-          {/* HS Forge logomark */}
-          <svg viewBox="0 0 48 56" width="30" height="35" fill="none" aria-hidden="true" className="shrink-0 transition-transform duration-200 group-hover:scale-105">
-            {/* Base — dark left half */}
-            <polygon points="24,1 2,13 2,43 24,55" fill="#12121a" />
-            {/* Right half — fractionally lighter for depth */}
-            <polygon points="24,1 46,13 46,43 24,55" fill="#1a1a26" />
-            {/* Outer border */}
-            <polygon points="24,1 46,13 46,43 24,55 2,43 2,13" fill="none" stroke="rgba(255,255,255,0.13)" strokeWidth="1" />
-            {/* H glyph (left half) */}
-            <text x="12" y="40" textAnchor="middle" fontSize="27" fontWeight="900" fontFamily="Arial Black,Helvetica,sans-serif" fill="rgba(210,215,232,0.88)">H</text>
-            {/* S glyph (right half) */}
-            <text x="36" y="40" textAnchor="middle" fontSize="27" fontWeight="900" fontFamily="Arial Black,Helvetica,sans-serif" fill="rgba(195,202,228,0.80)">S</text>
-            {/* Blue energy split — outer glow */}
-            <line x1="24" y1="2" x2="24" y2="54" stroke="#1d4ed8" strokeWidth="4" opacity="0.45" />
-            {/* Core line */}
-            <line x1="24" y1="2" x2="24" y2="54" stroke="#60a5fa" strokeWidth="1.5" opacity="0.95" />
-            {/* Hot centre */}
-            <line x1="24" y1="8" x2="24" y2="48" stroke="#e0f2fe" strokeWidth="0.65" opacity="0.85" />
-            {/* Top highlight edges */}
-            <line x1="24" y1="1" x2="46" y2="13" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-            <line x1="24" y1="1" x2="2"  y2="13" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-          </svg>
-          {/* Wordmark */}
-          <span className={`text-[15px] font-black tracking-[0.04em] transition-colors duration-200 ${isDark ? 'text-white group-hover:text-cyan-100' : 'text-slate-900 group-hover:text-cyan-700'}`}>
-            HS <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Forge</span>
-          </span>
-        </a>
-        <div className={`hidden gap-0.5 rounded-full border p-1 md:flex ${isDark ? 'border-white/[0.07] bg-white/[0.02]' : 'border-black/[0.07] bg-black/[0.02]'}`}>
-          {([['work', '#work'], ['process', '#process'], ['contact', '#contact']] as [string, string][]).map(([label, href]) => (
-            <a key={label} href={href} className={`rounded-full px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-all duration-150 ${isDark ? 'hover:bg-white/[0.07] hover:text-white' : 'hover:bg-black/[0.05] hover:text-slate-900'}`}>{label}</a>
-          ))}
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            className={`rounded-full border p-2.5 transition-all duration-200 ${isDark ? 'border-white/[0.1] bg-white/[0.05] text-slate-400 hover:border-cyan-300/30 hover:text-cyan-300' : 'border-black/[0.1] bg-black/[0.04] text-slate-500 hover:border-cyan-500/40 hover:text-cyan-600'}`}
-          >
-            {isDark ? <Sun size={14} /> : <Moon size={14} />}
-          </button>
-          <NeonButton asLink href="mailto:hassantariq233@gmail.com" variant="default" size="sm">Contact</NeonButton>
-        </div>
-      </nav>
-    </header>
+    <a href="#home" className="group flex items-center gap-2.5" aria-label="HS Forge – home">
+      <svg viewBox="0 0 48 56" width="28" height="33" fill="none" aria-hidden="true" className="shrink-0 transition-transform duration-200 group-hover:scale-105">
+        <polygon points="24,1 2,13 2,43 24,55" fill="#12121a" />
+        <polygon points="24,1 46,13 46,43 24,55" fill="#1a1a26" />
+        <polygon points="24,1 46,13 46,43 24,55 2,43 2,13" fill="none" stroke="rgba(255,255,255,0.13)" strokeWidth="1" />
+        <text x="12" y="40" textAnchor="middle" fontSize="27" fontWeight="900" fontFamily="Arial Black,Helvetica,sans-serif" fill="rgba(210,215,232,0.88)">H</text>
+        <text x="36" y="40" textAnchor="middle" fontSize="27" fontWeight="900" fontFamily="Arial Black,Helvetica,sans-serif" fill="rgba(195,202,228,0.80)">S</text>
+        <line x1="24" y1="2" x2="24" y2="54" stroke="#1d4ed8" strokeWidth="4" opacity="0.45" />
+        <line x1="24" y1="2" x2="24" y2="54" stroke="#60a5fa" strokeWidth="1.5" opacity="0.95" />
+        <line x1="24" y1="8" x2="24" y2="48" stroke="#e0f2fe" strokeWidth="0.65" opacity="0.85" />
+        <line x1="24" y1="1" x2="46" y2="13" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+        <line x1="24" y1="1" x2="2"  y2="13" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+      </svg>
+      <span className={`text-[14px] font-black tracking-[0.04em] transition-colors duration-200 ${isDark ? 'text-white group-hover:text-cyan-100' : 'text-slate-900 group-hover:text-cyan-700'}`}>
+        HS <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Forge</span>
+      </span>
+    </a>
+  );
+}
+
+/* ─── Floating dock (desktop) ────────────────────────────────────────────── */
+function PortfolioDock({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => void }) {
+  const iconCls = `w-[22px] h-[22px] ${isDark ? 'text-slate-300' : 'text-slate-600'}`;
+  return (
+    <div className="fixed top-4 left-1/2 z-50 hidden -translate-x-1/2 md:block">
+      <Dock isDark={isDark} iconSize={50}>
+        <DockIcon href="#home" name="Home">
+          <Home className={iconCls} strokeWidth={1.6} />
+        </DockIcon>
+        <DockIcon href="#work" name="Case Studies">
+          <Briefcase className={iconCls} strokeWidth={1.6} />
+        </DockIcon>
+        <DockIcon href="#proof" name="Public Proof">
+          <Award className={iconCls} strokeWidth={1.6} />
+        </DockIcon>
+        <DockIcon href="#process" name="Process">
+          <Workflow className={iconCls} strokeWidth={1.6} />
+        </DockIcon>
+        <DockIcon href="#contact" name="Contact">
+          <Mail className={iconCls} strokeWidth={1.6} />
+        </DockIcon>
+        {/* Separator */}
+        <li aria-hidden="true" className="mx-1 h-8 w-px self-center rounded-full" style={{ background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+        <DockIcon href="#" name={isDark ? 'Light mode' : 'Dark mode'} onClick={toggleTheme}>
+          {isDark
+            ? <Sun className={iconCls} strokeWidth={1.6} />
+            : <Moon className={iconCls} strokeWidth={1.6} />}
+        </DockIcon>
+      </Dock>
+    </div>
   );
 }
 
@@ -317,34 +318,54 @@ const fadeUp = {
 function Hero({ isDark }: { isDark: boolean }) {
   return (
     <section id="home" className="relative min-h-screen overflow-hidden">
-      <div className={`pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b ${isDark ? 'from-[#020817]/70' : 'from-[#f1f5f9]/70'} to-transparent`} />
-      <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t ${isDark ? 'from-[#020817]/60' : 'from-[#f1f5f9]/60'} to-transparent`} />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/[0.04] via-transparent to-cyan-500/[0.04]" />
+      {/* Dotted wave — fills the full hero */}
+      <Suspense fallback={null}>
+        <DottedSurface isDark={isDark} className="absolute inset-0 w-full h-full" />
+      </Suspense>
 
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <ElegantShape delay={0.3} width={560} height={130} rotate={12}  gradient="from-cyan-500/[0.12]"    className="left-[-8%] top-[18%]" />
-        <ElegantShape delay={0.5} width={440} height={110} rotate={-15} gradient="from-violet-500/[0.12]"  className="right-[-4%] top-[65%]" />
-        <ElegantShape delay={0.4} width={280} height={70}  rotate={-8}  gradient="from-emerald-500/[0.10]" className="left-[8%] bottom-[8%]" />
-        <ElegantShape delay={0.6} width={180} height={55}  rotate={22}  gradient="from-amber-500/[0.10]"   className="right-[20%] top-[10%]" />
-        <ElegantShape delay={0.7} width={130} height={38}  rotate={-28} gradient="from-rose-500/[0.08]"    className="left-[26%] top-[6%]" />
-      </div>
+      {/* Edge fades so dots dissolve into the page bg */}
+      <div className={`pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b ${isDark ? 'from-[#020817]' : 'from-[#f5f3ee]'} to-transparent`} />
+      <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t ${isDark ? 'from-[#020817]' : 'from-[#f5f3ee]'} to-transparent`} />
 
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-5 pb-24 pt-32 text-center md:px-8">
+      {/* Soft radial glow centred behind the text */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[90px]"
+        style={{
+          width: '680px', height: '480px',
+          background: isDark
+            ? 'radial-gradient(ellipse at center, rgba(255,255,255,0.07), transparent 68%)'
+            : 'radial-gradient(ellipse at center, rgba(15,23,42,0.07), transparent 68%)',
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center px-5 pb-24 pt-32 text-center md:px-8">
         <motion.h1 custom={0} variants={fadeUp} initial="hidden" animate="visible" className="hero-heading max-w-4xl">
-          <span className={`bg-clip-text text-transparent ${isDark ? 'bg-gradient-to-b from-white to-white/80' : 'bg-gradient-to-b from-slate-900 to-slate-700'}`}>I build AI systems</span>
+          <span className={isDark ? 'text-white' : 'text-slate-950'}>I build AI systems</span>
           <br />
-          <span className={`bg-clip-text text-transparent ${isDark ? 'bg-gradient-to-r from-cyan-300 via-white/90 to-violet-300' : 'bg-gradient-to-r from-cyan-500 via-slate-800 to-violet-600'}`}>that turn messy workflows</span>
+          <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>that turn messy workflows</span>
           <br />
-          <span className={`bg-clip-text text-transparent ${isDark ? 'bg-gradient-to-b from-white/90 to-white/70' : 'bg-gradient-to-b from-slate-800 to-slate-600'}`}>into clean, profitable software.</span>
+          <span className={isDark ? 'text-white' : 'text-slate-950'}>into clean, profitable software.</span>
         </motion.h1>
 
-        <motion.p custom={1} variants={fadeUp} initial="hidden" animate="visible" className={`mt-7 max-w-xl text-base leading-8 md:text-lg ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+        <motion.p custom={1} variants={fadeUp} initial="hidden" animate="visible" className={`mt-6 max-w-lg text-sm leading-7 md:text-base md:leading-8 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
           I'm Hassan, a Mathematics and Computer Science professional. I will help your startup or business turn repeated manual workload into an automated AI system.
         </motion.p>
 
         <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible" className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <NeonButton asLink href="#contact" variant="primary" size="default">Work with me</NeonButton>
-          <NeonButton asLink href="#work" variant="ghost" size="default">View case studies</NeonButton>
+          <a
+            href="#contact"
+            className={`inline-flex items-center justify-center rounded-full px-7 py-3 text-[0.78rem] font-bold tracking-[0.14em] uppercase transition-all duration-200 ${isDark ? 'border-white/20 text-white hover:border-white/45 hover:bg-white/[0.06]' : 'border-slate-950/20 text-slate-900 hover:border-slate-950/40 hover:bg-slate-950/[0.05]'} border`}
+          >
+            Work with me
+          </a>
+          <a
+            href="#work"
+            className={`inline-flex items-center justify-center rounded-full border px-7 py-3 text-[0.78rem] font-bold tracking-[0.14em] uppercase transition-all duration-200 ${isDark ? 'border-white/20 text-white hover:border-white/45 hover:bg-white/[0.06]' : 'border-slate-950/20 text-slate-900 hover:border-slate-950/40 hover:bg-slate-950/[0.05]'}`}
+          >
+            View case studies
+          </a>
         </motion.div>
       </div>
 
@@ -356,9 +377,9 @@ function Hero({ isDark }: { isDark: boolean }) {
 }
 
 /* ─── VideoCard16x9 ──────────────────────────────────────────────────────── */
-function VideoCard16x9({ src, poster, title, label, description, proof, chips, proves, accent, isDark, idx, useLaptop = false }: {
+function VideoCard16x9({ src, poster, title, label, description, proof, chips, accent, isDark, idx, useLaptop = false }: {
   src: string; poster?: string; title: string; label: string; description: string;
-  proof: string[]; chips: string[]; proves: string;
+  proof: string[]; chips: string[];
   accent: Accent; isDark: boolean; idx: number; useLaptop?: boolean;
 }) {
   const t = tone(accent);
@@ -413,12 +434,6 @@ function VideoCard16x9({ src, poster, title, label, description, proof, chips, p
                     </li>
                   ))}
                 </ul>
-                <div className={`border-t pt-4 ${isDark ? 'border-white/[0.07]' : 'border-slate-200'}`}>
-                  <p className={`text-xs leading-5 font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                    <span className={`mr-1.5 font-black ${t.text}`}>→</span>
-                    {proves}
-                  </p>
-                </div>
               </div>
             </div>
           </div>
@@ -446,12 +461,6 @@ function VideoCard16x9({ src, poster, title, label, description, proof, chips, p
                   </li>
                 ))}
               </ul>
-              <div className={`mt-6 border-t pt-5 ${isDark ? 'border-white/[0.07]' : 'border-slate-200'}`}>
-                <p className={`text-xs leading-5 font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                  <span className={`mr-1.5 font-black ${t.text}`}>→</span>
-                  {proves}
-                </p>
-              </div>
             </div>
 
             {/* Flat 16/9 video panel */}
@@ -477,11 +486,11 @@ function VideoCard16x9({ src, poster, title, label, description, proof, chips, p
 }
 
 /* ─── VideoCardPhone ─────────────────────────────────────────────────────── */
-function VideoCardPhone({ src, poster, title, label, description = '', proof = [], sections, chips, proves, accent, isDark }: {
+function VideoCardPhone({ src, poster, title, label, description = '', proof = [], sections, chips, accent, isDark }: {
   src: string; poster?: string; title: string; label: string;
   description?: string; proof?: string[];
   sections?: { heading: string; text: string }[];
-  chips: string[]; proves: string;
+  chips: string[];
   accent: Accent; isDark: boolean;
 }) {
   const t = tone(accent);
@@ -526,12 +535,6 @@ function VideoCardPhone({ src, poster, title, label, description = '', proof = [
                 </ul>
               </>
             )}
-            <div className={`mt-6 border-t pt-5 ${isDark ? 'border-white/[0.07]' : 'border-slate-200'}`}>
-              <p className={`text-xs leading-5 font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                <span className={`mr-1.5 font-black ${t.text}`}>→</span>
-                {proves}
-              </p>
-            </div>
           </div>
 
           {/* ── Phone mockup — 55% on desktop, centred ── */}
@@ -541,45 +544,47 @@ function VideoCardPhone({ src, poster, title, label, description = '', proof = [
               className="absolute -z-10 rounded-full blur-[80px] opacity-[0.18]"
               style={{ width: '340px', height: '340px', background: t.hex }}
             />
-            {/* Phone frame */}
-            <div
-              className="relative overflow-hidden bg-[#050508]"
-              style={{
-                width: '272px',
-                aspectRatio: '9/19.5',
-                borderRadius: '3.5rem',
-                border: '2.5px solid rgba(255,255,255,0.13)',
-                boxShadow: [
-                  '0 80px 140px rgba(0,0,0,0.58)',
-                  `0 0 80px ${t.hex}1a`,
-                  'inset 0 1px 0 rgba(255,255,255,0.09)',
-                  'inset 0 0 0 1px rgba(255,255,255,0.05)',
-                ].join(', '),
-              }}
-            >
-              {/* Dynamic island */}
+            {/* Phone frame + buttons — wrapped so buttons position against the phone, not the wide container */}
+            <div className="relative" style={{ width: '272px' }}>
               <div
-                className="absolute top-3.5 left-1/2 -translate-x-1/2 z-20 rounded-full bg-black"
-                style={{ width: '108px', height: '30px' }}
-              />
-              {/* Inner screen ring */}
-              <div
-                className="pointer-events-none absolute inset-0 z-10 rounded-[3.25rem]"
-                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.06)' }}
-              />
-              <video
-                ref={videoRef}
-                autoPlay muted loop playsInline preload="none"
-                poster={poster}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-              {/* Home bar */}
-              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 h-1 w-20 rounded-full bg-white/25" />
+                className="relative overflow-hidden bg-[#050508]"
+                style={{
+                  width: '272px',
+                  aspectRatio: '9/19.5',
+                  borderRadius: '3.5rem',
+                  border: '2.5px solid rgba(255,255,255,0.13)',
+                  boxShadow: [
+                    '0 80px 140px rgba(0,0,0,0.58)',
+                    `0 0 80px ${t.hex}1a`,
+                    'inset 0 1px 0 rgba(255,255,255,0.09)',
+                    'inset 0 0 0 1px rgba(255,255,255,0.05)',
+                  ].join(', '),
+                }}
+              >
+                {/* Dynamic island */}
+                <div
+                  className="absolute top-3.5 left-1/2 -translate-x-1/2 z-20 rounded-full bg-black"
+                  style={{ width: '108px', height: '30px' }}
+                />
+                {/* Inner screen ring */}
+                <div
+                  className="pointer-events-none absolute inset-0 z-10 rounded-[3.25rem]"
+                  style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.06)' }}
+                />
+                <video
+                  ref={videoRef}
+                  autoPlay muted loop playsInline preload="none"
+                  poster={poster}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                {/* Home bar */}
+                <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 h-1 w-20 rounded-full bg-white/25" />
+              </div>
+              {/* Side buttons — relative to the 272px phone wrapper */}
+              <div className="absolute right-[-5px] top-[130px] h-[68px] w-1 rounded-full bg-white/[0.10]" />
+              <div className="absolute left-[-5px] top-[105px] h-[44px] w-1 rounded-full bg-white/[0.10]" />
+              <div className="absolute left-[-5px] top-[162px] h-[68px] w-1 rounded-full bg-white/[0.10]" />
             </div>
-            {/* Side buttons */}
-            <div className="absolute right-[-5px] top-[130px] h-[68px] w-1 rounded-full bg-white/[0.10]" />
-            <div className="absolute left-[-5px] top-[105px] h-[44px] w-1 rounded-full bg-white/[0.10]" />
-            <div className="absolute left-[-5px] top-[162px] h-[68px] w-1 rounded-full bg-white/[0.10]" />
           </div>
         </div>
       </Surface>
@@ -716,10 +721,10 @@ function ProcessSection({ isDark }: { isDark: boolean }) {
   ];
 
   const descriptions = [
-    { label: 'Define',  desc: 'Clarify the workflow' },
-    { label: 'Build',   desc: 'Create the first useful version' },
-    { label: 'Review',  desc: 'Test with real feedback' },
-    { label: 'Improve', desc: 'Refine and repeat' },
+    { label: 'Define',  desc: 'Clarify the workflow',             pixels: ['#cffafe', '#67e8f9', '#22d3ee'] },
+    { label: 'Build',   desc: 'Create the first useful version',  pixels: ['#ede9fe', '#c4b5fd', '#a78bfa'] },
+    { label: 'Review',  desc: 'Test with real feedback',          pixels: ['#ede9fe', '#c4b5fd', '#a78bfa'] },
+    { label: 'Improve', desc: 'Refine and repeat',                pixels: ['#cffafe', '#67e8f9', '#22d3ee'] },
   ];
 
   return (
@@ -728,7 +733,7 @@ function ProcessSection({ isDark }: { isDark: boolean }) {
       <div className="mb-14 text-center">
         <p className="mb-2 text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">process</p>
         <h2 className={`text-[2.4rem] font-black leading-[1.05] tracking-[-0.04em] md:text-5xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
-          The System Loop
+          The Agile System
         </h2>
         <p className={`mx-auto mt-4 max-w-[460px] text-base leading-7 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
           Define the workflow, build the first useful version, review it, then improve through the next cycle.
@@ -829,17 +834,47 @@ function ProcessSection({ isDark }: { isDark: boolean }) {
 
       {/* 4-column step descriptions */}
       <div className="mx-auto mt-7 grid max-w-[640px] grid-cols-2 gap-3 md:grid-cols-4">
-        {descriptions.map(({ label, desc }) => (
+        {descriptions.map(({ label, desc, pixels }) => (
           <div
             key={label}
-            className={`rounded-xl border p-4 ${isDark ? 'border-white/[0.06] bg-white/[0.018]' : 'border-slate-200 bg-white/50'}`}
+            className={`relative overflow-hidden rounded-xl border p-4 ${isDark ? 'border-white/[0.06] bg-white/[0.018]' : 'border-slate-200 bg-white/50'}`}
           >
-            <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-400">{label}</p>
-            <p className={`text-[11px] leading-[1.5] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{desc}</p>
+            <PixelCanvas
+              gap={7}
+              speed={30}
+              colors={isDark ? pixels : pixels.map(c => c + 'aa')}
+              variant="default"
+              noFocus
+            />
+            <div className="relative z-10">
+              <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-400">{label}</p>
+              <p className={`text-[11px] leading-[1.5] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{desc}</p>
+            </div>
           </div>
         ))}
       </div>
     </section>
+  );
+}
+
+/* ─── CardScrollReveal ───────────────────────────────────────────────────── */
+function CardScrollReveal({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'start 0.2'] });
+  const rotateX = useTransform(scrollYProgress, [0, 1], [20, 0]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1.05, 1]);
+  return (
+    <div ref={ref} style={{ perspective: '1000px' }}>
+      <motion.div
+        style={{
+          rotateX,
+          scale,
+          boxShadow: '0 0 #0000004d, 0 9px 20px #0000004a, 0 37px 37px #00000042, 0 84px 50px #00000026, 0 149px 60px #0000000a, 0 233px 65px #00000003',
+        }}
+      >
+        {children}
+      </motion.div>
+    </div>
   );
 }
 
@@ -859,41 +894,44 @@ function ProofSection({ isDark }: { isDark: boolean }) {
       </div>
 
       <div className="space-y-6">
-        <VideoCard16x9
-          src={labSafeVideo}
-          poster={posterLabSafe}
-          title="LabSafe"
-          label="Research workflow system"
-          description="A lab management system replacing spreadsheet and email-based workflows with structured records, request flows, and lineage visualisation."
-          proof={['Role-based access', 'Structured request workflows', 'Lineage visualisation']}
-          chips={['Research ops', 'RBAC', 'Lineage']}
-          proves="Proves I can build structured systems for complex real-world workflows."
-          accent="emerald" isDark={isDark} idx={0} useLaptop
-        />
-        <VideoCard16x9
-          src={metaShiftVideo}
-          poster={posterMetaShift}
-          title="MetaShift"
-          label="Metadata automation tool"
-          description="A workflow automation tool that turns messy image folders and catalogue metadata into matched, organised, export-ready batches."
-          proof={['Metadata matching', 'Duplicate and missing-record detection', 'Organised batch export']}
-          chips={['Automation', 'Metadata', 'Batch export']}
-          proves="Proves I can turn repeated manual work into automation."
-          accent="violet" isDark={isDark} idx={1} useLaptop
-        />
-        <VideoCardPhone
-          src={gatorParkVideo}
-          poster={posterGatorPark}
-          title="GatorPark"
-          label="Published mobile product"
-          sections={[
-            { heading: 'Published iOS product', text: 'Live parking availability with check-in/check-out flows.' },
-            { heading: 'System behaviour',       text: 'Firebase-powered updates with a privacy-minimal user flow.' },
-          ]}
-          chips={['iOS', 'Firebase', 'App Store']}
-          proves="Proves I can ship user-facing software."
-          accent="cyan" isDark={isDark}
-        />
+        <CardScrollReveal>
+          <VideoCard16x9
+            src={labSafeVideo}
+            poster={posterLabSafe}
+            title="LabSafe"
+            label="Research workflow system"
+            description="A lab management system replacing spreadsheet and email-based workflows with structured records, request flows, and lineage visualisation."
+            proof={['Role-based access', 'Structured request workflows', 'Lineage visualisation']}
+            chips={['Research ops', 'RBAC', 'Lineage']}
+            accent="emerald" isDark={isDark} idx={0} useLaptop
+          />
+        </CardScrollReveal>
+        <CardScrollReveal>
+          <VideoCard16x9
+            src={metaShiftVideo}
+            poster={posterMetaShift}
+            title="MetaShift"
+            label="Metadata automation tool"
+            description="A workflow automation tool that turns messy image folders and catalogue metadata into matched, organised, export-ready batches."
+            proof={['Metadata matching', 'Duplicate and missing-record detection', 'Organised batch export']}
+            chips={['Automation', 'Metadata', 'Batch export']}
+            accent="violet" isDark={isDark} idx={1} useLaptop
+          />
+        </CardScrollReveal>
+        <CardScrollReveal>
+          <VideoCardPhone
+            src={gatorParkVideo}
+            poster={posterGatorPark}
+            title="GatorPark"
+            label="Published mobile product"
+            sections={[
+              { heading: 'Published iOS product', text: 'Live parking availability with check-in/check-out flows.' },
+              { heading: 'System behaviour',       text: 'Firebase-powered updates with a privacy-minimal user flow.' },
+            ]}
+            chips={['iOS', 'Firebase', 'App Store']}
+            accent="cyan" isDark={isDark}
+          />
+        </CardScrollReveal>
       </div>
 
       <div className="mt-12">
@@ -930,7 +968,6 @@ function PublicProofSection({ isDark }: { isDark: boolean }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeIdxRef = useRef(0);
   const [activeIdx, setActiveIdx] = useState(0);
-  const { ref: revealRef, visible } = useReveal();
 
   function goTo(idx: number) {
     const el = scrollRef.current;
@@ -950,7 +987,6 @@ function PublicProofSection({ isDark }: { isDark: boolean }) {
     setActiveIdx(clamped);
   }
 
-  // Re-snap to correct slide after a window resize so scroll position stays accurate.
   useEffect(() => {
     function onResize() {
       const el = scrollRef.current;
@@ -965,179 +1001,110 @@ function PublicProofSection({ isDark }: { isDark: boolean }) {
   const canNext = activeIdx < linkedInCards.length - 1;
 
   const arrowCls = (enabled: boolean) =>
-    `flex h-10 w-10 items-center justify-center rounded-full border text-lg font-bold transition-all duration-200 ${
+    `flex h-9 w-9 items-center justify-center rounded-full border text-lg font-bold transition-all duration-200 ${
       enabled
-        ? isDark
-          ? 'border-white/[0.14] bg-black/50 text-white backdrop-blur-md hover:border-cyan-300/40 hover:text-cyan-300'
-          : 'border-black/[0.1] bg-white/70 text-slate-700 backdrop-blur-md hover:border-cyan-500/40 hover:text-cyan-600'
+        ? 'border-white/[0.14] bg-black/60 text-white backdrop-blur-md hover:border-cyan-300/50 hover:text-cyan-300'
         : 'cursor-not-allowed border-white/[0.05] bg-black/20 text-white/20'
     }`;
 
+  const titleComponent = (
+    <div className="mb-6">
+      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">
+        public proof
+      </p>
+      <h2 className={`text-[2.4rem] font-black leading-[1.05] tracking-[-0.04em] md:text-5xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
+        Shared publicly, backed by real work
+      </h2>
+      <p className={`mx-auto mt-4 max-w-[480px] text-base leading-7 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+        Research, shipped products, and build milestones documented on LinkedIn.
+      </p>
+    </div>
+  );
+
   return (
-    <section id="proof" className="py-20 md:py-28 scroll-mt-20">
-      {/* Heading */}
-      <div ref={revealRef} className={`reveal ${visible ? 'revealed' : ''} mb-12 text-center`}>
-        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">public proof</p>
-        <h2 className={`text-[2.4rem] font-black leading-[1.05] tracking-[-0.04em] md:text-5xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
-          Shared publicly, backed by real work
-        </h2>
-        <p className={`mx-auto mt-4 max-w-[480px] text-base leading-7 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-          Research, shipped products, and build milestones documented on LinkedIn.
-        </p>
-      </div>
-
-      {/* Tablet showcase — centred, max 1100px */}
-      <div className="relative mx-auto" style={{ maxWidth: 'min(1100px, 100%)' }}>
-
-        {/* ── iPad/tablet outer bezel ── */}
-        <div
-          className="relative"
-          style={{
-            borderRadius: '2.8rem',
-            background: isDark
-              ? 'linear-gradient(155deg, #2e2e3a 0%, #1e1e28 50%, #131318 100%)'
-              : 'linear-gradient(155deg, #dddde6 0%, #cacad4 50%, #b8b8c2 100%)',
-            border: `2px solid ${isDark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.12)'}`,
-            boxShadow: isDark
-              ? '0 48px 120px -24px rgba(0,0,0,0.85), 0 0 0 0.5px rgba(255,255,255,0.04) inset, inset 0 1px 0 rgba(255,255,255,0.08)'
-              : '0 48px 120px -24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.9)',
-            padding: '22px 16px 34px',
-          }}
-        >
-          {/* Camera */}
-          <div className="mb-[10px] flex justify-center">
-            <div
-              style={{
-                width: '9px', height: '9px', borderRadius: '50%',
-                background: isDark ? '#18181e' : '#aaaabc',
-                border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.15)'}`,
-                boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,0.05)' : 'none',
-              }}
-            />
+    <section id="proof" className="scroll-mt-20">
+      <ContainerScroll titleComponent={titleComponent}>
+        {/* Carousel inside the scroll card */}
+        <div className="relative h-full w-full">
+          {/* Badges */}
+          <div className="pointer-events-none absolute right-3 top-3 z-10">
+            <span className="rounded-full border border-[#0a66c2]/50 bg-[#0a66c2]/25 px-2.5 py-[3px] text-[9px] font-black uppercase tracking-[0.12em] text-[#7ab8f5]">
+              LinkedIn
+            </span>
+          </div>
+          <div className="pointer-events-none absolute left-3 top-3 z-10">
+            <span className="rounded-full border border-white/[0.12] bg-black/50 px-2.5 py-[3px] text-[9px] font-black uppercase tracking-[0.12em] text-white/50">
+              {String(activeIdx + 1).padStart(2, '0')} / {String(linkedInCards.length).padStart(2, '0')}
+            </span>
           </div>
 
-          {/* Screen */}
-          <div
-            className="relative overflow-hidden"
-            style={{
-              borderRadius: '1.4rem',
-              height: 'clamp(460px, 62vh, 880px)',
-              background: '#000',
-              boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.06)',
-            }}
+          {/* Arrows */}
+          <button
+            onClick={() => goTo(activeIdx - 1)}
+            disabled={!canPrev}
+            aria-label="Previous post"
+            className={`absolute left-3 top-1/2 z-20 -translate-y-1/2 ${arrowCls(canPrev)}`}
           >
-            {/* LinkedIn badge — top-right of screen */}
-            <div className="pointer-events-none absolute right-3 top-3 z-10">
-              <span className="rounded-full border border-[#0a66c2]/50 bg-[#0a66c2]/25 px-2.5 py-[3px] text-[9px] font-black uppercase tracking-[0.12em] text-[#7ab8f5]">
-                LinkedIn
-              </span>
-            </div>
+            ‹
+          </button>
+          <button
+            onClick={() => goTo(activeIdx + 1)}
+            disabled={!canNext}
+            aria-label="Next post"
+            className={`absolute right-3 top-1/2 z-20 -translate-y-1/2 ${arrowCls(canNext)}`}
+          >
+            ›
+          </button>
 
-            {/* Counter badge — top-left */}
-            <div className="pointer-events-none absolute left-3 top-3 z-10">
-              <span className={`rounded-full border px-2.5 py-[3px] text-[9px] font-black uppercase tracking-[0.12em] ${isDark ? 'border-white/[0.12] bg-black/50 text-white/50' : 'border-white/60 bg-white/70 text-slate-500'}`}>
-                {String(activeIdx + 1).padStart(2, '0')} / {String(linkedInCards.length).padStart(2, '0')}
-              </span>
-            </div>
-
-            {/* Prev arrow — overlaid on screen */}
-            <button
-              onClick={() => goTo(activeIdx - 1)}
-              disabled={!canPrev}
-              aria-label="Previous post"
-              className={`absolute left-3 top-1/2 z-20 -translate-y-1/2 ${arrowCls(canPrev)}`}
-            >
-              ‹
-            </button>
-
-            {/* Next arrow — overlaid on screen */}
-            <button
-              onClick={() => goTo(activeIdx + 1)}
-              disabled={!canNext}
-              aria-label="Next post"
-              className={`absolute right-3 top-1/2 z-20 -translate-y-1/2 ${arrowCls(canNext)}`}
-            >
-              ›
-            </button>
-
-            {/* Horizontal scroll container */}
-            <div
-              ref={scrollRef}
-              onScroll={handleScroll}
-              className="no-scrollbar flex h-full"
-              style={{ overflowX: 'auto', scrollSnapType: 'x mandatory', scrollbarWidth: 'none' }}
-            >
-              {linkedInCards.map((card, i) => (
-                <div
-                  key={i}
-                  className="flex h-full w-full flex-shrink-0 items-start justify-center"
-                  style={{
-                    scrollSnapAlign: 'start',
-                    background: isDark ? '#070d1a' : '#eef2f7',
-                    padding: '14px 14px 10px',
-                  }}
-                >
-                  <img
-                    src={card.img}
-                    alt={liCaptions[i]}
-                    loading={i === 0 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    style={{
-                      display: 'block',
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      objectFit: 'contain',
-                      objectPosition: 'center top',
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Screen-edge inner ring */}
-            <div
-              className="pointer-events-none absolute inset-0"
-              style={{ borderRadius: '1.4rem', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.07)' }}
-            />
-          </div>
-
-          {/* Home bar */}
-          <div className="mt-4 flex justify-center">
-            <div
-              style={{
-                width: '110px', height: '5px', borderRadius: '3px',
-                background: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)',
-              }}
-            />
-          </div>
-        </div>
-
-        {/* ── Caption + dot progress ── */}
-        <div className="mt-6 flex flex-col items-center gap-3">
-          <p className={`text-[12px] font-semibold tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            {liCaptions[activeIdx]}
-          </p>
-          <div className="flex items-center gap-1.5">
-            {linkedInCards.map((_, i) => (
-              <button
+          {/* Slide strip */}
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="no-scrollbar flex h-full"
+            style={{ overflowX: 'auto', scrollSnapType: 'x mandatory', scrollbarWidth: 'none' }}
+          >
+            {linkedInCards.map((card, i) => (
+              <div
                 key={i}
-                onClick={() => goTo(i)}
-                aria-label={`Go to ${liCaptions[i]}`}
-                className="rounded-full transition-all duration-300"
-                style={{
-                  height: '6px',
-                  width: i === activeIdx ? '20px' : '6px',
-                  background: i === activeIdx
-                    ? '#22d3ee'
-                    : i < activeIdx
-                    ? 'rgba(34,211,238,0.3)'
-                    : isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
-                }}
-              />
+                className="flex h-full w-full flex-shrink-0 items-start justify-center"
+                style={{ scrollSnapAlign: 'start', background: '#070d1a', padding: '14px 14px 10px' }}
+              >
+                <img
+                  src={card.img}
+                  alt={liCaptions[i]}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  style={{ display: 'block', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', objectPosition: 'center top' }}
+                />
+              </div>
             ))}
           </div>
+
+          {/* Caption + dots — bottom overlay */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-2 pb-3 pt-8"
+            style={{ background: 'linear-gradient(to top, rgba(7,13,26,0.9) 60%, transparent)' }}
+          >
+            <p className="text-[11px] font-semibold tracking-wide text-slate-400">
+              {liCaptions[activeIdx]}
+            </p>
+            <div className="pointer-events-auto flex items-center gap-1.5">
+              {linkedInCards.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => goTo(i)}
+                  aria-label={`Go to ${liCaptions[i]}`}
+                  className="rounded-full transition-all duration-300"
+                  style={{
+                    height: '5px',
+                    width: i === activeIdx ? '18px' : '5px',
+                    background: i === activeIdx ? '#22d3ee' : i < activeIdx ? 'rgba(34,211,238,0.3)' : 'rgba(255,255,255,0.15)',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      </ContainerScroll>
     </section>
   );
 }
@@ -1145,23 +1112,23 @@ function PublicProofSection({ isDark }: { isDark: boolean }) {
 /* ─── EnquirySection ─────────────────────────────────────────────────────── */
 function EnquirySection({ isDark }: { isDark: boolean }) {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [focused, setFocused] = useState({ name: false, email: false, message: false });
+  const [emailValid, setEmailValid] = useState(true);
   const { ref, visible } = useReveal();
+
+  const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  const active = (k: keyof typeof form) => focused[k] || form[k].length > 0;
+  const focus = (k: keyof typeof form, on: boolean) => setFocused(f => ({ ...f, [k]: on }));
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!validateEmail(form.email)) { setEmailValid(false); return; }
     const body = `Name: ${form.name}\nEmail: ${form.email}\n\nWhat I want built:\n${form.message}`;
     window.location.href = `mailto:hassantariq233@gmail.com?subject=Build Request&body=${encodeURIComponent(body)}`;
   }
 
-  const inputCls = `w-full rounded-xl border bg-transparent px-4 py-3 text-sm outline-none transition-colors duration-150 ${
-    isDark
-      ? 'border-white/[0.1] text-white placeholder:text-slate-600 focus:border-cyan-300/[0.4]'
-      : 'border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-cyan-500/[0.4]'
-  }`;
-
   return (
     <section id="contact" className="py-20 md:py-28 scroll-mt-20">
-      {/* Section header */}
       <div ref={ref} className={`reveal ${visible ? 'revealed' : ''} mb-12 text-center`}>
         <p className="mb-2 text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">services</p>
         <h2 className={`text-3xl font-black tracking-[-0.03em] md:text-4xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -1173,34 +1140,54 @@ function EnquirySection({ isDark }: { isDark: boolean }) {
         </p>
       </div>
 
-      {/* Enquiry card */}
       <div className="mx-auto max-w-[560px]">
         <Surface className="p-7 md:p-10">
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            <input
-              type="text"
-              placeholder="Name"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              required
-              className={inputCls}
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              required
-              className={inputCls}
-            />
-            <textarea
-              placeholder="What do you want built?"
-              value={form.message}
-              onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-              required
-              rows={4}
-              className={`${inputCls} resize-none`}
-            />
+          <form onSubmit={handleSubmit} className="space-y-5">
+
+            {/* Name */}
+            <div className={`float-field ${active('name') ? 'active' : ''} ${focused.name ? 'focused' : ''}`}>
+              <input
+                type="text" id="f-name" required
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                onFocus={() => focus('name', true)}
+                onBlur={() => focus('name', false)}
+                className="float-input"
+              />
+              <label htmlFor="f-name">Name</label>
+            </div>
+
+            {/* Email */}
+            <div className={`float-field ${active('email') ? 'active' : ''} ${focused.email ? 'focused' : ''} ${!emailValid && form.email ? 'invalid' : ''}`}
+              style={{ paddingBottom: !emailValid && form.email ? '1.2rem' : undefined }}>
+              <input
+                type="email" id="f-email" required
+                value={form.email}
+                onChange={e => {
+                  setForm(f => ({ ...f, email: e.target.value }));
+                  setEmailValid(!e.target.value || validateEmail(e.target.value));
+                }}
+                onFocus={() => focus('email', true)}
+                onBlur={() => focus('email', false)}
+                className="float-input"
+              />
+              <label htmlFor="f-email">Email Address</label>
+              {!emailValid && form.email && <span className="float-error">Please enter a valid email</span>}
+            </div>
+
+            {/* Message */}
+            <div className={`float-field float-field--textarea ${active('message') ? 'active' : ''} ${focused.message ? 'focused' : ''}`}>
+              <textarea
+                id="f-message" required rows={4}
+                value={form.message}
+                onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                onFocus={() => focus('message', true)}
+                onBlur={() => focus('message', false)}
+                className="float-textarea"
+              />
+              <label htmlFor="f-message">What do you want built?</label>
+            </div>
+
             <div className="pt-1">
               <NeonButton type="submit" variant="primary" size="default" className="w-full">
                 Request a build call
@@ -1209,6 +1196,7 @@ function EnquirySection({ isDark }: { isDark: boolean }) {
                 If it looks like a fit, I'll get back to you to arrange a call.
               </p>
             </div>
+
           </form>
         </Surface>
       </div>
@@ -1220,17 +1208,23 @@ function EnquirySection({ isDark }: { isDark: boolean }) {
 export function App() {
   const { isDark, toggle } = useTheme();
   return (
-    <div className={`relative min-h-screen overflow-x-hidden transition-colors duration-300 selection:bg-cyan-200 selection:text-slate-950 ${isDark ? 'bg-[#020817] text-slate-100' : 'bg-[#f1f5f9] text-slate-900'}`}>
+    <div className={`relative min-h-screen overflow-x-hidden transition-colors duration-300 selection:bg-cyan-200 selection:text-slate-950 ${isDark ? 'bg-[#020817] text-slate-100' : 'bg-[#f5f3ee] text-slate-900'}`}>
       <div className="pointer-events-none fixed inset-0 -z-20">
-        <Suspense fallback={null}>
-          <AnoAI className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isDark ? 'opacity-[0.32]' : 'opacity-[0.10]'}`} />
-        </Suspense>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_15%_8%,rgba(34,211,238,.06),transparent_32%),radial-gradient(ellipse_at_78%_12%,rgba(168,85,247,.05),transparent_30%),radial-gradient(ellipse_at_85%_80%,rgba(16,185,129,.05),transparent_30%)]" />
         <div className="dot-grid absolute inset-0 opacity-[0.22]" />
         <div className="noise absolute inset-0 opacity-[0.04]" />
       </div>
 
-      <Nav isDark={isDark} toggleTheme={toggle} />
+      {/* Floating logo — top-left on all screen sizes */}
+      <div className="fixed top-4 left-5 z-50">
+        <LogoMark isDark={isDark} />
+      </div>
+
+      {/* Theme toggle — top-right on mobile only (dock handles desktop) */}
+      <div className="fixed top-3 right-4 z-50 md:hidden">
+        <AnimatedThemeToggler isDark={isDark} onToggle={toggle} />
+      </div>
+
       <Hero isDark={isDark} />
 
       <main className="mx-auto max-w-7xl px-5 md:px-8">
@@ -1243,9 +1237,13 @@ export function App() {
 
       <PortfolioFooter />
 
+      {/* Mobile bottom nav */}
       <div className="fixed bottom-0 inset-x-0 z-50 md:hidden">
         <InteractiveMenu />
       </div>
+
+      {/* Desktop dock */}
+      <PortfolioDock isDark={isDark} toggleTheme={toggle} />
 
     </div>
   );
