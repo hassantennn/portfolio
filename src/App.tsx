@@ -371,14 +371,15 @@ function Hero({ isDark }: { isDark: boolean }) {
 }
 
 /* ─── VideoCard16x9 ──────────────────────────────────────────────────────── */
-function VideoCard16x9({ src, poster, title, label, description, proof, chips, accent, isDark, idx, useLaptop = false, logo }: {
+function VideoCard16x9({ src, poster, title, label, description, proof, chips, accent, isDark, idx, useLaptop = false, logo, logoBg }: {
   src: string; poster?: string; title: string; label: string; description: string;
   proof: string[]; chips: string[];
-  accent: Accent; isDark: boolean; idx: number; useLaptop?: boolean; logo?: string;
+  accent: Accent; isDark: boolean; idx: number; useLaptop?: boolean; logo?: string; logoBg?: 'white' | 'black';
 }) {
   const t = tone(accent);
   const { ref: revealRef, visible } = useReveal();
   const videoRef = useVideoLazy(src);
+  const logoBgCls = logoBg === 'white' ? 'border-slate-200 bg-white' : logoBg === 'black' ? 'border-slate-700/30 bg-black' : isDark ? 'border-white/[0.08] bg-white/[0.05]' : 'border-slate-700/20 bg-slate-900/80';
   return (
     <div ref={revealRef} className={`reveal ${visible ? 'revealed' : ''}`} style={{ transitionDelay: `${idx * 80}ms` }}>
       <Surface className="p-0">
@@ -409,7 +410,7 @@ function VideoCard16x9({ src, poster, title, label, description, proof, chips, a
                 <span className={`mb-3 block text-[10px] font-black uppercase tracking-[0.28em] ${t.text}`}>{label}</span>
                 <div className="mb-3 flex items-center gap-3">
                   {logo && (
-                    <div className={`flex h-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border px-2 ${isDark ? 'border-white/[0.08] bg-white/[0.05]' : 'border-slate-700/20 bg-slate-900/80'}`}>
+                    <div className={`flex h-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border px-2 ${logoBgCls}`}>
                       <img src={logo} alt={`${title} logo`} className="h-7 w-auto max-w-[88px] object-contain" />
                     </div>
                   )}
@@ -447,7 +448,7 @@ function VideoCard16x9({ src, poster, title, label, description, proof, chips, a
               <span className={`mb-3 block text-[10px] font-black uppercase tracking-[0.28em] ${t.text}`}>{label}</span>
               <div className="mb-3 flex items-center gap-3">
                 {logo && (
-                  <div className={`flex h-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border px-2 ${isDark ? 'border-white/[0.08] bg-white/[0.05]' : 'border-slate-700/20 bg-slate-900/80'}`}>
+                  <div className={`flex h-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border px-2 ${logoBgCls}`}>
                     <img src={logo} alt={`${title} logo`} className="h-7 w-auto max-w-[88px] object-contain" />
                   </div>
                 )}
@@ -494,16 +495,17 @@ function VideoCard16x9({ src, poster, title, label, description, proof, chips, a
 }
 
 /* ─── VideoCardPhone ─────────────────────────────────────────────────────── */
-function VideoCardPhone({ src, poster, title, label, description = '', proof = [], sections, chips, accent, isDark, logo }: {
+function VideoCardPhone({ src, poster, title, label, description = '', proof = [], sections, chips, accent, isDark, logo, logoBg }: {
   src: string; poster?: string; title: string; label: string;
   description?: string; proof?: string[];
   sections?: { heading: string; text: string }[];
   chips: string[];
-  accent: Accent; isDark: boolean; logo?: string;
+  accent: Accent; isDark: boolean; logo?: string; logoBg?: 'white' | 'black';
 }) {
   const t = tone(accent);
   const { ref: revealRef, visible } = useReveal();
   const videoRef = useVideoLazy(src);
+  const logoBgCls = logoBg === 'white' ? 'border-slate-200 bg-white' : logoBg === 'black' ? 'border-slate-700/30 bg-black' : isDark ? 'border-white/[0.08] bg-white/[0.05]' : 'border-slate-700/20 bg-slate-900/80';
   return (
     <div ref={revealRef} className={`reveal ${visible ? 'revealed' : ''}`} style={{ transitionDelay: '160ms' }}>
       <Surface className="p-0">
@@ -554,7 +556,7 @@ function VideoCardPhone({ src, poster, title, label, description = '', proof = [
             <span className={`mb-3 block text-[10px] font-black uppercase tracking-[0.28em] ${t.text}`}>{label}</span>
             <div className="mb-3 flex items-center gap-3">
               {logo && (
-                <div className={`flex h-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border px-2 ${isDark ? 'border-white/[0.08] bg-white/[0.05]' : 'border-slate-700/20 bg-slate-900/80'}`}>
+                <div className={`flex h-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border px-2 ${logoBgCls}`}>
                   <img src={logo} alt={`${title} logo`} className="h-7 w-auto max-w-[88px] object-contain" />
                 </div>
               )}
@@ -945,7 +947,7 @@ function ProofSection({ isDark }: { isDark: boolean }) {
             description="A lab management system replacing spreadsheet and email-based workflows with structured records, request flows, and lineage visualisation."
             proof={['Role-based access', 'Structured request workflows', 'Lineage visualisation']}
             chips={['Research ops', 'RBAC', 'Lineage']}
-            accent="emerald" isDark={isDark} idx={0} useLaptop logo={labsafeLogo}
+            accent="emerald" isDark={isDark} idx={0} useLaptop logo={labsafeLogo} logoBg="black"
           />
         </CardScrollReveal>
         <CardScrollReveal>
@@ -957,7 +959,7 @@ function ProofSection({ isDark }: { isDark: boolean }) {
             description="A workflow automation tool that turns messy image folders and catalogue metadata into matched, organised, export-ready batches."
             proof={['Metadata matching', 'Duplicate and missing-record detection', 'Organised batch export']}
             chips={['Automation', 'Metadata', 'Batch export']}
-            accent="violet" isDark={isDark} idx={1} useLaptop logo={metashiftLogo}
+            accent="violet" isDark={isDark} idx={1} useLaptop logo={metashiftLogo} logoBg="white"
           />
         </CardScrollReveal>
         <CardScrollReveal>
@@ -971,7 +973,7 @@ function ProofSection({ isDark }: { isDark: boolean }) {
               { heading: 'System behaviour',       text: 'Firebase-powered updates with a privacy-minimal user flow.' },
             ]}
             chips={['iOS', 'Firebase', 'App Store']}
-            accent="cyan" isDark={isDark} logo={gatorparkLogo}
+            accent="cyan" isDark={isDark} logo={gatorparkLogo} logoBg="white"
           />
         </CardScrollReveal>
       </div>
@@ -1143,17 +1145,34 @@ function EnquirySection({ isDark }: { isDark: boolean }) {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [focused, setFocused] = useState({ name: false, email: false, message: false });
   const [emailValid, setEmailValid] = useState(true);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const { ref, visible } = useReveal();
 
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const active = (k: keyof typeof form) => focused[k] || form[k].length > 0;
   const focus = (k: keyof typeof form, on: boolean) => setFocused(f => ({ ...f, [k]: on }));
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!validateEmail(form.email)) { setEmailValid(false); return; }
-    const body = `Name: ${form.name}\nEmail: ${form.email}\n\nWhat I want built:\n${form.message}`;
-    window.location.href = `mailto:hassantariq233@gmail.com?subject=Build Request&body=${encodeURIComponent(body)}`;
+    setStatus('loading');
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          access_key: 'c7a1dfea-6b5a-43cf-8793-6a57d513584c',
+          subject: 'New message from HS Forge portfolio',
+          name: form.name,
+          email: form.email,
+          message: form.message,
+        }),
+      });
+      const data = await res.json();
+      setStatus(data.success ? 'success' : 'error');
+    } catch {
+      setStatus('error');
+    }
   }
 
   return (
@@ -1171,62 +1190,92 @@ function EnquirySection({ isDark }: { isDark: boolean }) {
 
       <div className="mx-auto max-w-[560px]">
         <Surface className="p-7 md:p-10">
-          <form onSubmit={handleSubmit} className="space-y-5">
-
-            {/* Name */}
-            <div className={`float-field ${active('name') ? 'active' : ''} ${focused.name ? 'focused' : ''}`}>
-              <input
-                type="text" id="f-name" required
-                value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                onFocus={() => focus('name', true)}
-                onBlur={() => focus('name', false)}
-                className="float-input"
-              />
-              <label htmlFor="f-name">Name</label>
-            </div>
-
-            {/* Email */}
-            <div className={`float-field ${active('email') ? 'active' : ''} ${focused.email ? 'focused' : ''} ${!emailValid && form.email ? 'invalid' : ''}`}
-              style={{ paddingBottom: !emailValid && form.email ? '1.2rem' : undefined }}>
-              <input
-                type="email" id="f-email" required
-                value={form.email}
-                onChange={e => {
-                  setForm(f => ({ ...f, email: e.target.value }));
-                  setEmailValid(!e.target.value || validateEmail(e.target.value));
-                }}
-                onFocus={() => focus('email', true)}
-                onBlur={() => focus('email', false)}
-                className="float-input"
-              />
-              <label htmlFor="f-email">Email Address</label>
-              {!emailValid && form.email && <span className="float-error">Please enter a valid email</span>}
-            </div>
-
-            {/* Message */}
-            <div className={`float-field float-field--textarea ${active('message') ? 'active' : ''} ${focused.message ? 'focused' : ''}`}>
-              <textarea
-                id="f-message" required rows={4}
-                value={form.message}
-                onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-                onFocus={() => focus('message', true)}
-                onBlur={() => focus('message', false)}
-                className="float-textarea"
-              />
-              <label htmlFor="f-message">What do you want built?</label>
-            </div>
-
-            <div className="pt-1">
-              <NeonButton type="submit" variant="primary" size="default" className="w-full">
-                Request a build call
-              </NeonButton>
-              <p className={`mt-3 text-center text-[11px] leading-5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-                If it looks like a fit, I'll get back to you to arrange a call.
+          {status === 'success' ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center space-y-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-slate-300/20 bg-slate-300/[0.07]">
+                <svg className="h-7 w-7 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className={`text-xl font-black tracking-[-0.02em] ${isDark ? 'text-white' : 'text-slate-900'}`}>Message sent!</h3>
+              <p className={`text-sm leading-6 max-w-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                Thanks for reaching out. If it looks like a fit, I'll get back to you to arrange a call.
               </p>
+              <button
+                onClick={() => { setStatus('idle'); setForm({ name: '', email: '', message: '' }); }}
+                className={`mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] underline underline-offset-2 transition-colors ${isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                Send another
+              </button>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
 
-          </form>
+              {/* Name */}
+              <div className={`float-field ${active('name') ? 'active' : ''} ${focused.name ? 'focused' : ''}`}>
+                <input
+                  type="text" id="f-name" required
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  onFocus={() => focus('name', true)}
+                  onBlur={() => focus('name', false)}
+                  className="float-input"
+                />
+                <label htmlFor="f-name">Name</label>
+              </div>
+
+              {/* Email */}
+              <div className={`float-field ${active('email') ? 'active' : ''} ${focused.email ? 'focused' : ''} ${!emailValid && form.email ? 'invalid' : ''}`}
+                style={{ paddingBottom: !emailValid && form.email ? '1.2rem' : undefined }}>
+                <input
+                  type="email" id="f-email" required
+                  value={form.email}
+                  onChange={e => {
+                    setForm(f => ({ ...f, email: e.target.value }));
+                    setEmailValid(!e.target.value || validateEmail(e.target.value));
+                  }}
+                  onFocus={() => focus('email', true)}
+                  onBlur={() => focus('email', false)}
+                  className="float-input"
+                />
+                <label htmlFor="f-email">Email Address</label>
+                {!emailValid && form.email && <span className="float-error">Please enter a valid email</span>}
+              </div>
+
+              {/* Message */}
+              <div className={`float-field float-field--textarea ${active('message') ? 'active' : ''} ${focused.message ? 'focused' : ''}`}>
+                <textarea
+                  id="f-message" required rows={4}
+                  value={form.message}
+                  onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                  onFocus={() => focus('message', true)}
+                  onBlur={() => focus('message', false)}
+                  className="float-textarea"
+                />
+                <label htmlFor="f-message">What do you want built?</label>
+              </div>
+
+              {status === 'error' && (
+                <p className="rounded-xl border border-red-500/20 bg-red-500/[0.07] px-4 py-3 text-[11px] leading-5 text-red-400">
+                  Something went wrong sending your message. Please try again or{' '}
+                  <a href="mailto:hassantariq233@gmail.com" className="underline underline-offset-2 hover:text-red-300 transition-colors">
+                    email me directly
+                  </a>
+                  .
+                </p>
+              )}
+
+              <div className="pt-1">
+                <NeonButton type="submit" variant="primary" size="default" className="w-full" disabled={status === 'loading'}>
+                  {status === 'loading' ? 'Sending…' : 'Request a build call'}
+                </NeonButton>
+                <p className={`mt-3 text-center text-[11px] leading-5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                  If it looks like a fit, I'll get back to you to arrange a call.
+                </p>
+              </div>
+
+            </form>
+          )}
         </Surface>
       </div>
     </section>
