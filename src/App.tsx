@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, lazy, Suspense, type ReactNode, type FormEvent, type RefObject } from 'react';
 import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
-import { Home, Briefcase, Award, Workflow, Mail, Sun, Moon } from 'lucide-react';
+import { Home, Briefcase, Award, Workflow, Mail, Sun, Moon, FlaskConical } from 'lucide-react';
 import { AnimatedThemeToggler } from './components/ui/animated-theme-toggler';
 import { Dock, DockIcon } from './components/ui/dock';
 import { PixelCanvas } from './components/ui/pixel-canvas';
@@ -251,18 +251,9 @@ function Surface({ children, className = '' }: { children: ReactNode; className?
 function LogoMark({ isDark }: { isDark: boolean }) {
   return (
     <a href="#home" className="group" aria-label="HS Forge – home">
-      {isDark ? (
-        <div className="overflow-hidden rounded-full bg-white/90 p-0.5 shadow-[0_1px_4px_rgba(0,0,0,0.35)] transition-transform duration-200 group-hover:scale-105">
-          <img src={logoImg} alt="HS Forge" className="block h-8 w-auto" />
-        </div>
-      ) : (
-        <img
-          src={logoImg}
-          alt="HS Forge"
-          className="block h-8 w-auto transition-transform duration-200 group-hover:scale-105"
-          style={{ mixBlendMode: 'multiply' }}
-        />
-      )}
+      <div className="h-9 w-9 overflow-hidden rounded-full bg-white/90 p-0.5 shadow-[0_1px_4px_rgba(0,0,0,0.35)] transition-transform duration-200 group-hover:scale-105">
+        <img src={logoImg} alt="HS" className="block h-full w-full rounded-full object-cover" />
+      </div>
     </a>
   );
 }
@@ -287,6 +278,9 @@ function PortfolioDock({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: 
         </DockIcon>
         <DockIcon href="#contact" name="Contact">
           <Mail className={iconCls} strokeWidth={1.6} />
+        </DockIcon>
+        <DockIcon href="/portfolio/research/index.html" name="Research">
+          <FlaskConical className={iconCls} strokeWidth={1.6} />
         </DockIcon>
         {/* Separator */}
         <li aria-hidden="true" className="mx-1 h-8 w-px self-center rounded-full" style={{ background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
@@ -361,11 +355,42 @@ function Hero({ isDark }: { isDark: boolean }) {
             View case studies
           </a>
         </motion.div>
+
+        <motion.a
+          href="/portfolio/research/index.html"
+          custom={3}
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          className="group mt-28 flex flex-col items-center no-underline"
+          whileHover={{ scale: 1.08 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        >
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="text-8xl" style={{ filter: isDark ? 'drop-shadow(0 0 24px rgba(148,163,184,0.4))' : 'none' }}>⚛</span>
+
+            {/* Orbiting neon ball */}
+            <motion.div
+              style={{ position: 'absolute', width: '170px', height: '170px', pointerEvents: 'none' }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
+            >
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                background: '#0066aa',
+                boxShadow: '0 0 6px 2px #0077cc, 0 0 16px 5px rgba(0,100,180,0.5), 0 0 36px 8px rgba(0,80,160,0.2)',
+              }} />
+            </motion.div>
+          </div>
+        </motion.a>
       </div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-        <div className="hero-scroll-line" />
-      </div>
     </section>
   );
 }
@@ -936,6 +961,7 @@ function ProofSection({ isDark }: { isDark: boolean }) {
           Real software. Real workflows. Real product execution.
         </p>
       </div>
+
 
       <div className="space-y-6">
         <CardScrollReveal>

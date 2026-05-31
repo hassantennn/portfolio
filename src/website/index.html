@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmarking DQC — Hassan Tariq Shafi</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: #020817;
+      color: #e2e8f0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px; line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden; min-width: 320px;
+    }
+    html.light body { background-color: #f5f3ee; color: #1a1a1a; }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 80; pointer-events: none;
+      background: linear-gradient(rgba(255,255,255,.018) 50%, rgba(0,0,0,.018) 50%);
+      background-size: 100% 4px; mix-blend-mode: soft-light;
+    }
+    html.light body::before { opacity: 0; }
+
+    .page-root { position: relative; min-height: 100vh; }
+    .bg-layers { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+    .bg-radials {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 15% 8%, rgba(148,163,184,.04), transparent 32%),
+                  radial-gradient(ellipse at 78% 12%, rgba(100,116,139,.03), transparent 30%),
+                  radial-gradient(ellipse at 85% 80%, rgba(71,85,105,.03), transparent 30%);
+    }
+    html.light .bg-radials { opacity: 0; }
+    .bg-dotgrid {
+      position: absolute; inset: 0; opacity: .22;
+      background-image: radial-gradient(rgba(148,163,184,.22) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(ellipse at center, black 20%, transparent 72%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 72%);
+    }
+    html.light .bg-dotgrid { background-image: radial-gradient(rgba(15,23,42,.28) 1px, transparent 1px); }
+    .bg-noise { position: absolute; inset: 0; opacity: .04; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+    .surface {
+      position: relative; overflow: hidden; border-radius: 2rem;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.035);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 1px 3px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.28), 0 20px 72px -44px rgba(56,189,248,.4);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+    }
+    .surface:hover { transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 2px 8px rgba(0,0,0,.45), 0 8px 32px rgba(0,0,0,.32), 0 28px 100px -48px rgba(148,163,184,.35); }
+    .surface::before {
+      content: ''; position: absolute; inset-x: 0; top: 0; height: 1px; pointer-events: none;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,.18), transparent);
+    }
+    html.light .surface { background: #fff; border-color: rgba(0,0,0,.09); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06), 0 8px 40px rgba(0,0,0,.05); }
+    html.light .surface:hover { transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 2px 8px rgba(0,0,0,.1), 0 8px 40px rgba(0,0,0,.12); }
+
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 1; }
+    section { padding: 5rem 0; position: relative; z-index: 1; }
+
+    /* ── DOCK ── */
+    #dock-wrap { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 100; display: none; }
+    @media (min-width: 768px) { #dock-wrap { display: block; } }
+    .dock-ul {
+      display: flex; align-items: center; gap: 2px;
+      border-radius: 1rem; padding: 6px; list-style: none;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(2,8,23,.88);
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    }
+    html.light .dock-ul { border-color: rgba(0,0,0,.07); background: rgba(245,243,238,.92); box-shadow: 0 8px 32px rgba(0,0,0,.1); }
+    .dock-icon {
+      --icon-size: 50px;
+      position: relative; height: var(--icon-size); width: var(--icon-size);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      padding: 0 calc(var(--icon-size)*.075);
+      transition: width 150ms cubic-bezier(.25,1,.5,1), height 150ms cubic-bezier(.25,1,.5,1), margin-top 150ms cubic-bezier(.25,1,.5,1);
+    }
+    .dock-icon:hover { height: calc(var(--icon-size)*1.5); width: calc(var(--icon-size)*1.5); margin-top: calc(var(--icon-size)*-.5); }
+    .dock-icon:hover + .dock-icon { width: calc(var(--icon-size)*1.33 + var(--dock-offset-right,0px)); height: calc(var(--icon-size)*1.33 + var(--dock-offset-right,0px)); margin-top: calc(var(--icon-size)*-.33 + var(--dock-offset-right,0)*-1); }
+    .dock-icon:hover + .dock-icon + .dock-icon { width: calc(var(--icon-size)*1.17 + var(--dock-offset-right,0px)); height: calc(var(--icon-size)*1.17 + var(--dock-offset-right,0px)); margin-top: calc(var(--icon-size)*-.17 + var(--dock-offset-right,0)*-1); }
+    .dock-icon:has(+ .dock-icon:hover) { width: calc(var(--icon-size)*1.33 + var(--dock-offset-left,0px)); height: calc(var(--icon-size)*1.33 + var(--dock-offset-left,0px)); margin-top: calc(var(--icon-size)*-.33 + var(--dock-offset-left,0)*-1); }
+    .dock-icon:has(+ .dock-icon + .dock-icon:hover) { width: calc(var(--icon-size)*1.17 + var(--dock-offset-left,0px)); height: calc(var(--icon-size)*1.17 + var(--dock-offset-left,0px)); margin-top: calc(var(--icon-size)*-.17 + var(--dock-offset-left,0)*-1); }
+    .dock-icon a {
+      position: relative; display: flex; align-items: center; justify-content: center;
+      width: 100%; aspect-ratio: 1; border-radius: 10px; text-decoration: none;
+      border: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(to top, #18181b, #27272a);
+      box-shadow: rgba(255,255,255,.08) 0 1px 0 inset;
+      color: #94a3b8; padding: 6px;
+    }
+    html.light .dock-icon a { border-color: rgba(0,0,0,.10); background: linear-gradient(to top, #f5f5f5, #fff); box-shadow: rgba(0,0,0,.05) 0 1px 0 inset; color: #64748b; }
+    .dock-icon a svg { width: 100%; height: 100%; }
+    .dock-tip { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); white-space: nowrap; border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 500; pointer-events: none; opacity: 0; transition: opacity 200ms; z-index: 10; border: 1px solid rgba(255,255,255,.10); background: rgba(24,24,27,.95); color: #fff; backdrop-filter: blur(8px); }
+    html.light .dock-tip { border-color: rgba(0,0,0,.08); background: rgba(255,255,255,.95); color: #0f172a; }
+    .dock-icon:hover .dock-tip { opacity: 1; }
+    .dock-sep { width: 1px; height: 32px; border-radius: 9999px; margin: 0 4px; align-self: center; background: rgba(255,255,255,.1); }
+    html.light .dock-sep { background: rgba(0,0,0,.1); }
+
+    #logo-mark { position: fixed; top: 1rem; left: 1.25rem; z-index: 100; }
+    #logo-mark a { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9999px; overflow: hidden; background: rgba(255,255,255,.9); text-decoration: none; box-shadow: 0 1px 4px rgba(0,0,0,.35); transition: transform 200ms; padding: 2px; }
+    #logo-mark a:hover { transform: scale(1.05); }
+    #logo-mark img { width: 100%; height: 100%; object-fit: cover; border-radius: 9999px; display: block; }
+
+    #mobile-theme { position: fixed; top: .75rem; right: 1rem; z-index: 100; display: flex; }
+    @media (min-width: 768px) { #mobile-theme { display: none; } }
+    #mobile-theme button { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9999px; cursor: pointer; border: 1px solid rgba(255,255,255,.12); background: rgba(2,8,23,.8); color: #94a3b8; backdrop-filter: blur(12px); }
+    html.light #mobile-theme button { border-color: rgba(0,0,0,.1); background: rgba(245,243,238,.9); color: #64748b; }
+    #mobile-theme button svg { width: 16px; height: 16px; }
+
+    #mobile-nav { position: fixed; bottom: 0; inset-x: 0; z-index: 100; display: flex; align-items: center; justify-content: center; gap: .25rem; padding: .6rem 1rem; background: rgba(2,8,23,.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid rgba(255,255,255,.06); }
+    @media (min-width: 768px) { #mobile-nav { display: none; } }
+    html.light #mobile-nav { background: rgba(245,243,238,.94); border-top-color: rgba(0,0,0,.09); }
+    .mnav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: .2rem; padding: .5rem .875rem; background: none; border: none; cursor: pointer; color: rgba(100,116,139,.7); transition: color 200ms; font-family: inherit; font-size: .55rem; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; text-decoration: none; position: relative; min-width: 3rem; }
+    .mnav-item.active { color: #94a3b8; }
+    .mnav-item::after { content: ''; position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); width: var(--lineWidth, 0px); height: 2px; background: rgba(148,163,184,.75); border-radius: 999px; transition: width 280ms ease; }
+    html.light .mnav-item { color: rgba(60,55,50,.65); }
+    html.light .mnav-item.active { color: #475569; }
+    html.light .mnav-item::after { background: rgba(71,85,105,.75); }
+    .mnav-item svg { width: 1.15rem; height: 1.15rem; }
+
+    /* ── TYPOGRAPHY ── */
+    .sec-label { font-size: .625rem; font-weight: 900; text-transform: uppercase; letter-spacing: .28em; color: #94a3b8; margin-bottom: .6rem; }
+    html.light .sec-label { color: #475569; }
+    .sec-title { font-size: clamp(1.8rem,3.5vw,2.4rem); font-weight: 900; letter-spacing: -.04em; line-height: 1.05; color: #f1f5f9; margin-bottom: .6rem; }
+    html.light .sec-title { color: #0a0a0a; }
+    .sec-sub { font-size: .9375rem; color: #94a3b8; line-height: 1.7; max-width: 520px; }
+    html.light .sec-sub { color: #475569; }
+    .sec-head { margin-bottom: 2.5rem; }
+
+    .chip { display: inline-block; border-radius: 9999px; border: 1px solid; padding: .2rem .6rem; font-size: .625rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
+    .chip-1 { color: #e2e8f0; border-color: rgba(226,232,240,.20); background: rgba(226,232,240,.06); }
+    .chip-2 { color: #cbd5e1; border-color: rgba(203,213,225,.20); background: rgba(203,213,225,.06); }
+    .chip-3 { color: #94a3b8; border-color: rgba(148,163,184,.22); background: rgba(148,163,184,.06); }
+
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity .6s ease, transform .6s ease; }
+    .revealed { opacity: 1; transform: translateY(0); }
+    .d1 { transition-delay: .08s; } .d2 { transition-delay: .16s; }
+    .d3 { transition-delay: .24s; } .d4 { transition-delay: .32s; }
+
+    /* ── HERO ── */
+    #hero { min-height: 100vh; display: flex; align-items: center; padding-top: 62px; position: relative; overflow: hidden; }
+    #sparkles-hero { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+    .hero-inner { position: relative; z-index: 2; text-align: center; width: 100%; max-width: 820px; }
+    .hero-live { display: inline-flex; align-items: center; gap: .5rem; margin-bottom: 1.75rem; padding: .28rem .9rem; border: 1px solid rgba(255,255,255,.12); border-radius: 9999px; font-size: .625rem; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: #94a3b8; }
+    html.light .hero-live { border-color: rgba(0,0,0,.12); color: #475569; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #94a3b8; animation: livePulse 2.2s ease-in-out infinite; }
+    .hero-title { font-size: clamp(2rem,4.8vw,4rem); font-weight: 700; line-height: 1.08; letter-spacing: -.025em; color: #fff; margin-bottom: .45rem; }
+    html.light .hero-title { color: #0a0a0a; }
+    .hero-vs { font-size: clamp(1rem,2.4vw,1.5rem); font-weight: 400; color: #94a3b8; margin-bottom: 1.85rem; }
+    html.light .hero-vs { color: #475569; }
+    .hero-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: .35rem 1.2rem; font-size: .8rem; color: #64748b; margin-bottom: .5rem; }
+    html.light .hero-meta { color: #475569; }
+    .hero-deadline { display: inline-flex; align-items: center; gap: .5rem; margin: 1rem 0 2rem; padding: .38rem 1rem; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; font-size: .78rem; font-weight: 600; color: #94a3b8; }
+    html.light .hero-deadline { border-color: rgba(0,0,0,.1); color: #475569; }
+    .hero-stats { display: flex; flex-wrap: wrap; gap: .65rem; justify-content: center; }
+    .stat-pill { padding: .6rem 1.1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); backdrop-filter: blur(8px); }
+    html.light .stat-pill { border-color: rgba(0,0,0,.08); background: rgba(255,255,255,.6); }
+    .stat-pill .sl { font-size: .575rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: #64748b; display: block; margin-bottom: .05rem; }
+    html.light .stat-pill .sl { color: #475569; }
+    .stat-pill .sv { font-size: .94rem; font-weight: 800; letter-spacing: -.02em; color: #e2e8f0; }
+    html.light .stat-pill .sv { color: #0f172a; }
+    .scroll-line { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 2; width: 1px; height: 3.5rem; background: linear-gradient(to bottom, rgba(255,255,255,.5), transparent); animation: scrollFade 2.2s ease-in-out infinite; }
+    html.light .scroll-line { background: linear-gradient(to bottom, rgba(15,23,42,.5), transparent); }
+
+    /* ── ABSTRACT ── */
+    .bullet-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: .9rem; }
+    .bullet-list li { display: flex; align-items: flex-start; gap: .85rem; font-size: .9rem; color: #94a3b8; line-height: 1.65; }
+    html.light .bullet-list li { color: #475569; }
+    .bullet-list .bul { flex-shrink: 0; width: 5px; height: 5px; border-radius: 50%; background: #94a3b8; margin-top: .52rem; }
+    .bullet-list strong { color: #e2e8f0; font-weight: 600; }
+    html.light .bullet-list strong { color: #1e293b; }
+    .branch-svg { display: block; width: 100%; height: 100px; margin-top: 1.25rem; overflow: visible; }
+    .branch-path { fill: none; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+    html.light .branch-path { stroke: #64748b; }
+    .branch-path { stroke: #475569; }
+    .approach-pair { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-top: 1.25rem; }
+    .approach { border-radius: 1.25rem; border: 1px solid rgba(255,255,255,.07); background: rgba(255,255,255,.02); padding: 1rem 1.2rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 1px 3px rgba(0,0,0,.25); }
+    html.light .approach { border-color: rgba(0,0,0,.08); background: rgba(255,255,255,.7); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 1px 3px rgba(0,0,0,.06); }
+    .approach-name { font-size: .625rem; font-weight: 900; text-transform: uppercase; letter-spacing: .14em; color: #94a3b8; margin-bottom: .28rem; }
+    html.light .approach-name { color: #475569; }
+    .approach p { font-size: .82rem; color: #94a3b8; line-height: 1.65; margin: 0; }
+    html.light .approach p { color: #475569; }
+
+    /* ── THEORY ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; }
+    .formula { display: flex; justify-content: center; align-items: center; padding: 1.5rem .5rem; margin: .5rem 0 0; overflow: hidden; }
+    .formula .katex { font-size: 1.5rem; color: #f1f5f9; }
+    html.light .formula .katex { color: #0f172a; }
+    .formula-inner { display: inline-block; clip-path: inset(0 101% 0 0); will-change: clip-path; }
+    .formula-inner.drawn { clip-path: inset(0 0% 0 0); }
+    .warn-note { font-size: .78rem; color: #94a3b8; margin-top: .4rem; line-height: 1.5; }
+    html.light .warn-note { color: #475569; }
+    .card-sublabel { font-size: .625rem; font-weight: 900; text-transform: uppercase; letter-spacing: .2em; color: #64748b; margin-bottom: .6rem; }
+    html.light .card-sublabel { color: #475569; }
+    .chart-desc { font-size: .78rem; color: #94a3b8; margin-top: .75rem; line-height: 1.6; }
+    html.light .chart-desc { color: #475569; }
+    .decision-card { margin-top: .85rem; }
+    .decision-body { padding: 1.65rem; }
+    .decision-body p { font-size: .9rem; color: #94a3b8; line-height: 1.75; margin-bottom: .75rem; }
+    html.light .decision-body p { color: #475569; }
+    .decision-body p:last-child { margin-bottom: 0; }
+    .decision-body strong { color: #e2e8f0; font-weight: 600; }
+    html.light .decision-body strong { color: #1e293b; }
+    .insight-box { margin-top: 1.25rem; padding: 1rem 1.2rem; background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.09); border-radius: 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 1px 3px rgba(0,0,0,.2); }
+    html.light .insight-box { background: rgba(255,255,255,.7); border-color: rgba(0,0,0,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 1px 3px rgba(0,0,0,.06); }
+    .insight-lbl { font-size: .575rem; font-weight: 900; text-transform: uppercase; letter-spacing: .2em; color: #94a3b8; margin-bottom: .3rem; }
+    html.light .insight-lbl { color: #475569; }
+    .insight-box p { font-size: .835rem; color: #cbd5e1; line-height: 1.65; margin: 0; }
+    html.light .insight-box p { color: #475569; }
+    .insight-box code { font-family: 'Courier New', monospace; font-size: .8rem; color: #e2e8f0; }
+    html.light .insight-box code { color: #1e293b; }
+
+    /* ── BENCHMARKS ── */
+    .chart-section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .chart-card { padding: 1.5rem; }
+    .chart-card-title { font-size: .625rem; font-weight: 900; text-transform: uppercase; letter-spacing: .2em; color: #94a3b8; margin-bottom: .6rem; }
+    html.light .chart-card-title { color: #475569; }
+    .chart-wrap { position: relative; background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: .75rem; margin-top: .5rem; height: 480px; max-height: 480px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 2px 8px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.5); transition: box-shadow 220ms ease; }
+    html.light .chart-wrap { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 1px 4px rgba(0,0,0,.07), 0 2px 8px rgba(0,0,0,.04); }
+    canvas.chart { display: block; width: 100%; height: 100%; max-height: 440px; }
+    .chart-legend { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .6rem; font-size: .72rem; color: #94a3b8; }
+    html.light .chart-legend { color: #475569; }
+    .leg { display: flex; align-items: center; gap: .38rem; }
+    .chart-note { margin-top: .85rem; padding: .85rem 1rem; background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; font-size: .8rem; color: #94a3b8; line-height: 1.65; box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 1px 3px rgba(0,0,0,.2); }
+    html.light .chart-note { background: rgba(255,255,255,.7); border-color: rgba(0,0,0,.08); color: #475569; box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 1px 3px rgba(0,0,0,.06); }
+    .chart-note .chart-note-lbl { font-size: .575rem; font-weight: 900; text-transform: uppercase; letter-spacing: .16em; color: #94a3b8; display: block; margin-bottom: .28rem; }
+    html.light .chart-note .chart-note-lbl { color: #475569; }
+
+    /* ── ROADMAP ── */
+    .timeline { position: relative; padding-left: 2.75rem; }
+    .timeline::before { content: ''; position: absolute; left: .95rem; top: 14px; bottom: 14px; width: 1px; background: rgba(255,255,255,.06); }
+    html.light .timeline::before { background: rgba(0,0,0,.08); }
+    .tl-item {
+      position: relative; margin-bottom: 1.35rem;
+      opacity: 0; transform: translateX(-14px);
+      transition: opacity .55s ease, transform .55s ease;
+    }
+    .tl-item:last-child { margin-bottom: 0; }
+    .tl-item.lit { opacity: 1; transform: translateX(0); }
+    .tl-node {
+      position: absolute; left: -2.1rem; top: .38rem;
+      width: 13px; height: 13px; border-radius: 50%; border: 2px solid rgba(71,85,105,.5);
+      background: #020817;
+      transition: border-color .5s ease, box-shadow .5s ease, background .5s ease;
+    }
+    html.light .tl-node { background: #f5f3ee; }
+    .tl-item.lit .tl-node { border-color: rgba(148,163,184,.8); background: rgba(148,163,184,.12); box-shadow: 0 0 10px rgba(148,163,184,.25); }
+    .tl-card {
+      padding: 1.05rem 1.2rem;
+      border: 1px solid rgba(255,255,255,.07); border-radius: var(--r, 14px);
+      background: rgba(255,255,255,.025);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 1px 3px rgba(0,0,0,.3);
+      transition: border-color .5s ease, background .5s ease, box-shadow .5s ease;
+    }
+    html.light .tl-card { border-color: rgba(0,0,0,.07); background: rgba(255,255,255,.7); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 1px 3px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.04); }
+    .tl-item.lit .tl-card { border-color: rgba(255,255,255,.13); background: rgba(255,255,255,.04); box-shadow: 0 0 20px -8px rgba(148,163,184,.12); }
+    html.light .tl-item.lit .tl-card { border-color: rgba(0,0,0,.13); background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.07); }
+    .tl-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .4rem; margin-bottom: .28rem; }
+    .tl-num { font-size: .575rem; font-weight: 900; text-transform: uppercase; letter-spacing: .18em; color: #64748b; }
+    html.light .tl-num { color: #64748b; }
+    .tl-title { font-size: .92rem; font-weight: 700; color: #f1f5f9; margin-bottom: .2rem; transition: color .5s ease; }
+    html.light .tl-title { color: #1e293b; }
+    .tl-item.lit .tl-title { color: #fff; }
+    html.light .tl-item.lit .tl-title { color: #0f172a; }
+    .tl-desc { font-size: .8rem; color: #64748b; line-height: 1.6; transition: color .5s ease; }
+    html.light .tl-desc { color: #475569; }
+    .tl-item.lit .tl-desc { color: #94a3b8; }
+    html.light .tl-item.lit .tl-desc { color: #475569; }
+
+    /* ── FOOTER ── */
+    footer { border-top: 1px solid rgba(255,255,255,.06); padding: 2rem 0; position: relative; z-index: 1; padding-bottom: 5rem; }
+    @media (min-width: 768px) { footer { padding-bottom: 2rem; } }
+    html.light footer { border-top-color: rgba(0,0,0,.08); }
+    .ft-inner { display: flex; flex-direction: column; align-items: center; gap: .4rem; text-align: center; }
+    .ft-main { font-size: .855rem; font-weight: 600; color: #94a3b8; }
+    html.light .ft-main { color: #475569; }
+    .ft-sub { font-size: .74rem; color: #64748b; }
+    html.light .ft-sub { color: #475569; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+    @keyframes scrollFade { 0%,100%{opacity:.25;transform:scaleY(.85)} 50%{opacity:.75;transform:scaleY(1)} }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 820px) { .two-col, .approach-pair, .chart-section-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 500px) { .wrap { padding: 0 1.25rem; } section { padding: 3.5rem 0; } .timeline { padding-left: 2.25rem; } }
+  </style>
+</head>
+<body>
+<div class="page-root">
+
+<div class="bg-layers">
+  <div class="bg-radials"></div>
+  <div class="bg-dotgrid"></div>
+  <div class="bg-noise"></div>
+</div>
+
+<div id="logo-mark"><a href="/portfolio/" title="Back to portfolio"><img src="/portfolio/logo.png" alt="HS"></a></div>
+
+<div id="mobile-theme">
+  <button id="mobile-toggle" aria-label="Toggle theme">
+    <svg id="mt-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    <svg id="mt-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+</div>
+
+<!-- Desktop dock -->
+<div id="dock-wrap">
+  <nav role="navigation" aria-label="Site navigation">
+    <ul class="dock-ul" id="dock-ul">
+      <li class="dock-icon"><span class="dock-tip">Portfolio</span><a href="/portfolio/" aria-label="Back to portfolio"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a></li>
+      <li class="dock-icon"><span class="dock-tip">Abstract</span><a href="#abstract" aria-label="Abstract"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></a></li>
+      <li class="dock-icon"><span class="dock-tip">Theory</span><a href="#theory" aria-label="Theory"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5z"/></svg></a></li>
+      <li class="dock-icon"><span class="dock-tip">Benchmarks</span><a href="#benchmarks" aria-label="Benchmarks"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></a></li>
+      <li class="dock-icon"><span class="dock-tip">Roadmap</span><a href="#roadmap" aria-label="Roadmap"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></a></li>
+      <li class="dock-sep" aria-hidden="true"></li>
+      <li class="dock-icon" id="dock-theme">
+        <span class="dock-tip" id="dock-theme-tip">Light mode</span>
+        <a href="#" aria-label="Toggle theme" id="dock-theme-btn">
+          <svg id="dock-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg id="dock-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section id="hero">
+  <div id="sparkles-hero"></div>
+
+  <div class="wrap" style="display:flex;justify-content:center;">
+    <div class="hero-inner">
+      <h1 class="hero-title">Quantum Computing</h1>
+      <p class="hero-vs">University of Toronto</p>
+      <div class="hero-stats" style="margin-top:1.5rem">
+        <div class="stat-pill"><span class="sv">IEEE QCE26</span></div>
+        <div class="stat-pill"><span class="sv">Qiskit</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-line"></div>
+</section>
+
+<!-- ═══ ABSTRACT ═══ -->
+<section id="abstract">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2 class="sec-title">Abstract</h2>
+    </div>
+    <div class="surface reveal" style="padding:1.75rem 2rem">
+      <p style="font-size:.92rem;color:#94a3b8;line-height:1.8;margin:0">
+        Current quantum processors are single, noisy QPUs with a limited qubit count. As the field moves toward utility scale computation, companies are building networks of connected QPUs, but most quantum algorithms were designed for a single machine. Distributing them requires cutting the circuit at cross QPU boundaries, and the choice of how to make that cut has a significant impact on fidelity and cost. This project benchmarks two competing distribution strategies across quantum chemistry ansätze to determine when each is preferable.
+      </p>
+      <svg class="branch-svg" viewBox="0 0 600 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="branchGradDark" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#94a3b8" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="#94a3b8" stop-opacity="0.18"/>
+          </linearGradient>
+          <linearGradient id="branchGradLight" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#475569" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#475569" stop-opacity="0.12"/>
+          </linearGradient>
+        </defs>
+        <!-- stem -->
+        <path class="branch-path" id="bp-stem" d="M 300 0 L 300 38"/>
+        <!-- left arm -->
+        <path class="branch-path" id="bp-left" d="M 300 38 C 300 68, 95 68, 95 100"/>
+        <!-- right arm -->
+        <path class="branch-path" id="bp-right" d="M 300 38 C 300 68, 505 68, 505 100"/>
+        <!-- dot at split -->
+        <circle id="bp-dot" cx="300" cy="38" r="2.5" fill="#94a3b8" fill-opacity="0" class="branch-dot"/>
+      </svg>
+      <div class="approach-pair" style="margin-top:0">
+        <div class="approach">
+          <div class="approach-name">Circuit Cutting</div>
+          <p>Decomposes the circuit classically at gate boundaries. No quantum channel required, but reconstruction incurs 9<sup>k</sup> circuit evaluations per k cuts, exponential overhead that quickly becomes intractable.</p>
+        </div>
+        <div class="approach">
+          <div class="approach-name">Gate Teleportation</div>
+          <p>Transmits gates across QPUs using pre-shared Bell pairs as a quantum channel. Avoids exponential sampling, but fidelity decays as (1&minus;&eta;)<sup>n</sup> with transducer noise and gate count.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ THEORY ═══ -->
+<section id="theory">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2 class="sec-title">Key Formulas</h2>
+    </div>
+    <div class="two-col" style="margin-bottom:.85rem">
+      <div class="surface reveal d1" style="padding:2rem 1.75rem">
+        <p class="card-sublabel">Hellinger Fidelity</p>
+        <div class="formula" id="eq-hellinger"></div>
+      </div>
+      <div class="surface reveal d2" style="padding:2rem 1.75rem">
+        <p class="card-sublabel">Circuit Cutting Fidelity</p>
+        <div class="formula" id="eq-cut"></div>
+      </div>
+      <div class="surface reveal d1" style="padding:2rem 1.75rem">
+        <p class="card-sublabel">Gate Teleportation Fidelity</p>
+        <div class="formula" id="eq-remote"></div>
+      </div>
+      <div class="surface reveal d2" style="padding:2rem 1.75rem">
+        <p class="card-sublabel">Break-Even Condition</p>
+        <div class="formula" id="eq-breakeven"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ BENCHMARKS ═══ -->
+<section id="benchmarks">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2 class="sec-title">Benchmarks</h2>
+    </div>
+
+    <div class="chart-section-grid">
+      <div class="surface chart-card reveal">
+        <div class="chart-card-title">Remote Gate Fidelity vs Transducer Noise</div>
+        <div class="chart-wrap">
+          <canvas class="chart" id="chart-remote" height="440"></canvas>
+          <div class="chart-legend" id="leg-remote"></div>
+        </div>
+        <p class="chart-desc">Gate teleportation gets less accurate as the hardware connecting the two QPUs gets noisier. Current hardware sits at the right edge of this chart, meaning we need significantly cleaner connections before teleportation consistently wins.</p>
+      </div>
+
+      <div class="surface chart-card reveal d2">
+        <div class="chart-card-title">Circuit Cutting Fidelity vs Shot Budget</div>
+        <div class="chart-wrap">
+          <canvas class="chart" id="chart-cut" height="440"></canvas>
+          <div class="chart-legend" id="leg-cut"></div>
+        </div>
+        <p class="chart-desc">Circuit cutting needs to run the experiment many times to reconstruct the result. Each additional gate cut multiplies that cost dramatically, so while it works well for simple splits, it becomes impractical quickly as circuits grow.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ROADMAP ═══ -->
+<section id="roadmap">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2 class="sec-title">Roadmap</h2>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-node"></div>
+        <div class="tl-card">
+          <div class="tl-top"><span class="tl-num">Milestone 01</span></div>
+          <div class="tl-title">Literature Review and Environment Setup</div>
+          <div class="tl-desc">Survey of relevant literature and setup of the development environment with Qiskit and Tequila.</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-node"></div>
+        <div class="tl-card">
+          <div class="tl-top"><span class="tl-num">Milestone 02</span></div>
+          <div class="tl-title">Greedy Decision Strategy on GHZ Circuit</div>
+          <div class="tl-desc">Implement and validate the greedy per-gate decision strategy on the GHZ circuit, reproducing the fidelity break-even result.</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-node"></div>
+        <div class="tl-card">
+          <div class="tl-top"><span class="tl-num">Milestone 03</span></div>
+          <div class="tl-title">Application to Chemistry Ansätze</div>
+          <div class="tl-desc">Apply the strategy to UCCSD, UpCCD, UpCCGSD, and SPA+GS quantum chemistry circuits.</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-node"></div>
+        <div class="tl-card">
+          <div class="tl-top"><span class="tl-num">Milestone 04</span></div>
+          <div class="tl-title">Extension to CZ and CPhase Gates</div>
+          <div class="tl-desc">Extend the strategy to CZ and controlled-phase gates beyond the initial CNOT implementation.</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-node"></div>
+        <div class="tl-card">
+          <div class="tl-top"><span class="tl-num">Milestone 05</span></div>
+          <div class="tl-title">Comparative Study</div>
+          <div class="tl-desc">Full comparison across all ansätze and gate types, identifying when each strategy wins.</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-node"></div>
+        <div class="tl-card" style="border-color:rgba(203,213,225,.1)">
+          <div class="tl-top"><span class="tl-num">Milestone 06</span></div>
+          <div class="tl-title">IEEE QCE26 Workshop Paper</div>
+          <div class="tl-desc">Write and submit a 6-page peer-reviewed paper to the IEEE QCE26 Workshop, due early July 2026.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="ft-inner">
+      <p class="ft-main">Mitacs Internship 2026 &middot; University of Toronto &middot; MSRG Lab</p>
+      <p class="ft-sub">Supervised by Prof. Arno Jacobsen</p>
+    </div>
+  </div>
+</footer>
+
+<nav id="mobile-nav" aria-label="Mobile navigation">
+  <a class="mnav-item" href="/portfolio/">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </a>
+  <a class="mnav-item active" href="#abstract" data-section="abstract">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Abstract
+  </a>
+  <a class="mnav-item" href="#theory" data-section="theory">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5z"/></svg>
+    Formulas
+  </a>
+  <a class="mnav-item" href="#benchmarks" data-section="benchmarks">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Benchmarks
+  </a>
+  <a class="mnav-item" href="#roadmap" data-section="roadmap">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    Roadmap
+  </a>
+</nav>
+
+<script>
+// ── Theme ──────────────────────────────────────────────────────
+const root = document.documentElement;
+let isDark = localStorage.getItem('theme') !== 'light';
+function applyTheme() {
+  root.classList.toggle('light', !isDark);
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  document.getElementById('dock-sun').style.display  = isDark ? 'block' : 'none';
+  document.getElementById('dock-moon').style.display = isDark ? 'none'  : 'block';
+  document.getElementById('dock-theme-tip').textContent = isDark ? 'Light mode' : 'Dark mode';
+  document.getElementById('mt-sun').style.display  = isDark ? 'block' : 'none';
+  document.getElementById('mt-moon').style.display = isDark ? 'none'  : 'block';
+}
+function toggleTheme() { isDark = !isDark; applyTheme(); }
+document.getElementById('dock-theme-btn').addEventListener('click', e => { e.preventDefault(); toggleTheme(); });
+document.getElementById('mobile-toggle').addEventListener('click', toggleTheme);
+applyTheme();
+
+// ── Scroll reveal ──────────────────────────────────────────────
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); revObs.unobserve(e.target); } });
+}, { threshold: 0.06 });
+document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+// ── Roadmap animation (light up on scroll) ─────────────────────
+const tlItems = document.querySelectorAll('.tl-item');
+const tlObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const delay = parseInt(e.target.dataset.delay || 0);
+      setTimeout(() => e.target.classList.add('lit'), delay);
+      tlObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.35 });
+tlItems.forEach((el, i) => { el.dataset.delay = i * 90; tlObs.observe(el); });
+
+// ── Dock magnification ─────────────────────────────────────────
+const dockUl = document.getElementById('dock-ul');
+dockUl.addEventListener('mousemove', e => {
+  const icon = e.target.closest('.dock-icon');
+  if (!icon) return;
+  const rect = icon.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  const off = Math.floor(ratio * 10 - 5);
+  dockUl.style.setProperty('--dock-offset-left', `${-off}px`);
+  dockUl.style.setProperty('--dock-offset-right', `${off}px`);
+});
+dockUl.addEventListener('mouseleave', () => {
+  dockUl.style.removeProperty('--dock-offset-left');
+  dockUl.style.removeProperty('--dock-offset-right');
+});
+
+
+// ── Static Charts ───────────────────────────────────────────────
+
+const remoteData = {
+  1: [[0.001,0.980],[0.003,0.979],[0.006,0.977],[0.010,0.975],[0.015,0.970],[0.020,0.963],[0.030,0.945],[0.040,0.920],[0.055,0.880],[0.070,0.820],[0.085,0.745],[0.100,0.660]],
+  2: [[0.001,0.960],[0.003,0.958],[0.006,0.955],[0.010,0.950],[0.015,0.942],[0.020,0.930],[0.030,0.905],[0.040,0.865],[0.055,0.800],[0.070,0.710],[0.085,0.610],[0.100,0.510]],
+  3: [[0.001,0.940],[0.003,0.938],[0.006,0.934],[0.010,0.927],[0.015,0.916],[0.020,0.900],[0.030,0.865],[0.040,0.815],[0.055,0.725],[0.070,0.610],[0.085,0.495],[0.100,0.390]],
+  4: [[0.001,0.920],[0.003,0.917],[0.006,0.912],[0.010,0.904],[0.015,0.890],[0.020,0.870],[0.030,0.825],[0.040,0.762],[0.055,0.650],[0.070,0.520],[0.085,0.400],[0.100,0.305]],
+};
+const cutData = {
+  1: [[10,0.890],[20,0.925],[50,0.950],[100,0.965],[200,0.974],[500,0.982],[1000,0.987],[2000,0.990],[5000,0.993],[10000,0.994]],
+  2: [[10,0.680],[20,0.750],[50,0.820],[100,0.875],[200,0.920],[500,0.950],[1000,0.965],[2000,0.975],[5000,0.982],[10000,0.986]],
+  3: [[10,0.450],[20,0.530],[50,0.640],[100,0.735],[200,0.815],[500,0.880],[1000,0.920],[2000,0.945],[5000,0.965],[10000,0.973]],
+  4: [[10,0.300],[20,0.370],[50,0.475],[100,0.560],[200,0.660],[500,0.775],[1000,0.840],[2000,0.885],[5000,0.925],[10000,0.948]],
+};
+
+const lineStyles = [
+  { label: '1 CNOT', r:241, g:245, b:249 },
+  { label: '2 CNOTs', r:148, g:163, b:184 },
+  { label: '3 CNOTs', r:100, g:116, b:139 },
+  { label: '4 CNOTs', r:71,  g:85,  b:105 },
+];
+
+function buildLegend(id) {
+  const el = document.getElementById(id);
+  el.innerHTML = lineStyles.map(s =>
+    `<div class="leg"><span style="display:block;width:22px;height:2px;border-radius:2px;background:rgba(${s.r},${s.g},${s.b},0.85)"></span><span style="font-size:.72rem">${s.label}</span></div>`
+  ).join('');
+}
+
+function drawChart(canvasId, data, xLabel, xType, annotX) {
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.offsetWidth;
+  const H = parseInt(cv.getAttribute('height') || '220');
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+
+  const pl = 44, pr = 14, pt = 18, pb = 34;
+  const cw = W - pl - pr, ch = H - pt - pb;
+  const light = !isDark;
+  const gridCol  = light ? 'rgba(0,0,0,0.06)'  : 'rgba(255,255,255,0.05)';
+  const axisCol  = light ? 'rgba(0,0,0,0.18)'  : 'rgba(255,255,255,0.15)';
+  const labelCol = light ? 'rgba(0,0,0,0.42)'  : 'rgba(148,163,184,0.65)';
+
+  const allX = data[1].map(d => d[0]);
+  const xMin = allX[0], xMax = allX[allX.length-1];
+  const yMin = 0.28, yMax = 1.02;
+
+  function xP(x) {
+    return xType === 'log'
+      ? pl + (Math.log10(x) - Math.log10(xMin)) / (Math.log10(xMax) - Math.log10(xMin)) * cw
+      : pl + (x - xMin) / (xMax - xMin) * cw;
+  }
+  function yP(y) { return pt + (1 - (y - yMin) / (yMax - yMin)) * ch; }
+
+  // Subtle horizontal grid
+  [0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0].forEach(y => {
+    const py = yP(y);
+    ctx.beginPath(); ctx.moveTo(pl, py); ctx.lineTo(pl+cw, py);
+    ctx.strokeStyle = gridCol; ctx.lineWidth = .5; ctx.setLineDash([4,4]); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = labelCol; ctx.font = '9px Inter,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(y.toFixed(1), pl-6, py+3.5);
+  });
+
+  // X ticks
+  const xTicks = xType === 'log' ? [0.001,0.003,0.01,0.03,0.1] : [10,100,1000,10000];
+  xTicks.forEach(x => {
+    const px = xP(x);
+    ctx.beginPath(); ctx.moveTo(px, pt+ch); ctx.lineTo(px, pt+ch+5);
+    ctx.strokeStyle = axisCol; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.stroke();
+    ctx.fillStyle = labelCol; ctx.textAlign = 'center'; ctx.font = '8px Inter,sans-serif';
+    const lbl = xType === 'log'
+      ? (x >= 0.01 ? x.toString() : x.toExponential(0).replace('e-','e⁻'))
+      : (x >= 1000 ? (x/1000)+'k' : x.toString());
+    ctx.fillText(lbl, px, pt+ch+15);
+  });
+
+  // Axes
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(pl, pt); ctx.lineTo(pl, pt+ch+1);
+  ctx.strokeStyle = axisCol; ctx.lineWidth = 1; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pl, pt+ch); ctx.lineTo(pl+cw, pt+ch); ctx.stroke();
+
+  // X label
+  ctx.fillStyle = labelCol; ctx.font = '8px Inter,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(xLabel, pl + cw/2, H - 4);
+
+  // SotA annotation
+  if (annotX) {
+    const px = xP(annotX);
+    ctx.beginPath(); ctx.moveTo(px, pt); ctx.lineTo(px, pt+ch);
+    ctx.strokeStyle = 'rgba(148,163,184,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([3,4]); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(148,163,184,0.5)'; ctx.font = '7px Inter,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('SotA', px - 4, pt + 11);
+  }
+
+  // Draw area fills first (back to front), then lines, then dots
+  [3,2,1,0].forEach(i => {
+    const n = i + 1;
+    const pts = data[n];
+    const { r, g, b } = lineStyles[i];
+    const pixPts = pts.map(p => [xP(p[0]), yP(p[1])]);
+
+    // Smooth path helper (catmull-rom tangents)
+    function buildPath() {
+      ctx.beginPath();
+      ctx.moveTo(pixPts[0][0], pixPts[0][1]);
+      for (let k = 0; k < pixPts.length - 1; k++) {
+        const p0 = pixPts[Math.max(k-1,0)];
+        const p1 = pixPts[k];
+        const p2 = pixPts[k+1];
+        const p3 = pixPts[Math.min(k+2, pixPts.length-1)];
+        const cp1x = p1[0] + (p2[0]-p0[0])/6;
+        const cp1y = p1[1] + (p2[1]-p0[1])/6;
+        const cp2x = p2[0] - (p3[0]-p1[0])/6;
+        const cp2y = p2[1] - (p3[1]-p1[1])/6;
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1]);
+      }
+    }
+
+    // Area fill
+    buildPath();
+    ctx.lineTo(pixPts[pixPts.length-1][0], pt+ch);
+    ctx.lineTo(pixPts[0][0], pt+ch);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, pt, 0, pt+ch);
+    grad.addColorStop(0, `rgba(${r},${g},${b},${light ? 0.10 : 0.12})`);
+    grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    buildPath();
+    ctx.strokeStyle = `rgba(${r},${g},${b},${light ? 0.80 : 0.90})`;
+    ctx.lineWidth = 1.8;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.shadowColor = `rgba(${r},${g},${b},0.25)`;
+    ctx.shadowBlur = 4;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Dots at data points
+    pixPts.forEach(([px, py]) => {
+      ctx.beginPath(); ctx.arc(px, py, 2.2, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${r},${g},${b},0.85)`;
+      ctx.fill();
+    });
+  });
+}
+
+function redrawCharts() {
+  drawChart('chart-remote', remoteData, 'Transducer noise Nadd', 'log', 0.1);
+  drawChart('chart-cut',    cutData,    'Number of shots',        'log', null);
+}
+
+buildLegend('leg-remote');
+buildLegend('leg-cut');
+
+const chartObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      if (e.target.id === 'chart-remote') drawChart('chart-remote', remoteData, 'Transducer noise Nadd', 'log', 0.1);
+      if (e.target.id === 'chart-cut')    drawChart('chart-cut',    cutData,    'Number of shots',        'log', null);
+      chartObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.25 });
+['chart-remote','chart-cut'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) chartObs.observe(el);
+});
+
+window.addEventListener('resize', () => { redrawCharts(); });
+
+// Mobile nav active state + animated underline
+(function() {
+  const items = document.querySelectorAll('.mnav-item');
+  function setActive(el) {
+    items.forEach(i => {
+      i.classList.remove('active');
+      i.style.removeProperty('--lineWidth');
+    });
+    el.classList.add('active');
+    // measure text width for underline
+    const txt = el.childNodes[el.childNodes.length - 1];
+    const range = document.createRange();
+    range.selectNodeContents(el.lastChild || el);
+    const w = range.getBoundingClientRect().width || el.offsetWidth * 0.6;
+    el.style.setProperty('--lineWidth', `${Math.round(w)}px`);
+  }
+  // Set initial underline
+  setActive(items[0]);
+  items.forEach(item => {
+    item.addEventListener('click', () => setActive(item));
+  });
+  // Update on scroll
+  const sections = ['abstract','theory','benchmarks','roadmap'].map(id => document.getElementById(id)).filter(Boolean);
+  window.addEventListener('scroll', () => {
+    let current = sections[0];
+    sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s; });
+    const active = document.querySelector(`.mnav-item[data-section="${current.id}"]`);
+    if (active) setActive(active);
+  }, { passive: true });
+})();
+</script>
+
+<!-- Branch animation -->
+<script>
+(function() {
+  const ids = ['bp-stem','bp-left','bp-right'];
+  const delays = [0, 320, 320];
+  const durations = [380, 700, 700];
+  const dot = document.getElementById('bp-dot');
+  const isDarkMode = () => !document.documentElement.classList.contains('light');
+  const gradId = () => isDarkMode() ? 'url(#branchGradDark)' : 'url(#branchGradLight)';
+
+  const paths = ids.map(id => document.getElementById(id));
+  paths.forEach(p => {
+    if (!p) return;
+    const len = p.getTotalLength();
+    p.style.strokeDasharray = len;
+    p.style.strokeDashoffset = len;
+    p.setAttribute('stroke', gradId());
+  });
+
+  const svg = document.querySelector('.branch-svg');
+  if (!svg) return;
+
+  const obs = new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting) return;
+    paths.forEach((p, i) => {
+      if (!p) return;
+      p.setAttribute('stroke', gradId());
+      setTimeout(() => {
+        p.style.transition = `stroke-dashoffset ${durations[i]}ms cubic-bezier(0.4,0,0.2,1)`;
+        p.style.strokeDashoffset = '0';
+      }, delays[i]);
+    });
+    // dot fades in after stem
+    setTimeout(() => {
+      dot.style.transition = 'fill-opacity 300ms ease';
+      dot.style.fillOpacity = '0.55';
+      dot.setAttribute('fill', isDarkMode() ? '#94a3b8' : '#64748b');
+    }, 360);
+    obs.unobserve(svg);
+  }, { threshold: 0.6 });
+
+  obs.observe(svg);
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script>
+const katexOpts = { throwOnError: false };
+
+// Render into wrapper spans for clip animation
+const eqDefs = [
+  { id: 'eq-hellinger', tex: String.raw`F = \left(\sum_{k} \sqrt{P_{\mathrm{ideal},k} \cdot P_{\mathrm{noisy},k}}\right)^{\!2}`, delay: 0,   dur: 5000 },
+  { id: 'eq-cut',       tex: String.raw`f_{\mathrm{cut}} = 1 - \frac{9^{\,\text{cuts}}}{\text{shots}}`,                         delay: 400, dur: 4200 },
+  { id: 'eq-remote',    tex: String.raw`f_{\mathrm{remote}} = (1 - \eta)^{n}`,                                                   delay: 0,   dur: 3800 },
+  { id: 'eq-breakeven', tex: String.raw`f_{\mathrm{remote}} > f_{\mathrm{cut}} \;\wedge\; \text{Bell pairs} > 0`,                delay: 400, dur: 4500 },
+];
+
+// Render and hide immediately via inline style
+eqDefs.forEach(({ id, tex }) => {
+  const container = document.getElementById(id);
+  if (!container) return;
+  const wrap = document.createElement('span');
+  wrap.className = 'formula-inner';
+  wrap.style.clipPath = 'inset(0 101% 0 0)'; // hidden from the start
+  container.appendChild(wrap);
+  katex.render(tex, wrap, katexOpts);
+
+  // Prep SVG paths inside KaTeX
+  wrap.querySelectorAll('svg path').forEach(path => {
+    try {
+      const len = path.getTotalLength();
+      path.style.strokeDasharray = len;
+      path.style.strokeDashoffset = len;
+    } catch(e) {}
+  });
+});
+
+// Animate on scroll
+(function() {
+  const rows = [
+    [eqDefs[0], eqDefs[1]],
+    [eqDefs[2], eqDefs[3]],
+  ];
+  const rowBaseDelay = [0, 600];
+
+  function drawEq(def, baseDelay) {
+    const wrap = document.querySelector(`#${def.id} .formula-inner`);
+    if (!wrap || wrap._drawn) return;
+    wrap._drawn = true;
+    const totalDelay = baseDelay + def.delay;
+
+    setTimeout(() => {
+      // Double rAF ensures initial clip state is committed before transition starts
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        wrap.style.transition = `clip-path ${def.dur}ms cubic-bezier(0.16, 1, 0.3, 1)`;
+        wrap.style.clipPath = 'inset(0 0% 0 0)';
+
+        wrap.querySelectorAll('svg path').forEach(path => {
+          path.style.transition = `stroke-dashoffset ${def.dur}ms cubic-bezier(0.16, 1, 0.3, 1)`;
+          path.style.strokeDashoffset = '0';
+        });
+      }));
+    }, totalDelay);
+  }
+
+  const theorySection = document.getElementById('theory');
+  if (!theorySection) return;
+
+  let fired = false;
+  const obs = new IntersectionObserver(entries => {
+    if (fired || !entries[0].isIntersecting) return;
+    fired = true;
+    rows.forEach((row, ri) => row.forEach(def => drawEq(def, rowBaseDelay[ri])));
+    obs.unobserve(theorySection);
+  }, { threshold: 0.3 });
+
+  obs.observe(theorySection);
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2/tsparticles.slim.bundle.min.js"></script>
+<script>
+(async () => {
+  const isLight = document.documentElement.classList.contains('light');
+  const color = isLight ? '#475569' : '#94a3b8';
+  await tsParticles.load({
+    id: 'sparkles-hero',
+    options: {
+      fullScreen: { enable: false },
+      fpsLimit: 120,
+      background: { color: { value: 'transparent' } },
+      particles: {
+        color: { value: color },
+        number: { value: 90, density: { enable: true, width: 400, height: 400 } },
+        opacity: {
+          value: { min: 0.05, max: 0.6 },
+          animation: { enable: true, speed: 1, sync: false, startValue: 'random' },
+        },
+        size: { value: { min: 1.2, max: 2.8 } },
+        move: { enable: true, speed: { min: 0.1, max: 0.6 }, direction: 'none', outModes: { default: 'out' } },
+        shape: { type: 'circle' },
+      },
+      detectRetina: true,
+    },
+  });
+  document.getElementById('sparkles-hero').style.opacity = '0';
+  document.getElementById('sparkles-hero').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1000, fill: 'forwards' });
+})();
+</script>
+</div><!-- .page-root -->
+</body>
+</html>
