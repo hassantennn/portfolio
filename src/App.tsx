@@ -5,6 +5,7 @@ import { AnimatedThemeToggler } from './components/ui/animated-theme-toggler';
 import { Dock, DockIcon } from './components/ui/dock';
 import { PixelCanvas } from './components/ui/pixel-canvas';
 import logoImg from './assets/Logo.png';
+import atomIcon from './assets/icon.png';
 import labSafeVideo from './assets/walkthrough_labsafe_web.mp4';
 import metaShiftVideo from './assets/walkthrough_metashift_web.mp4';
 import gatorParkVideo from './assets/walkthrough_gatorpark_web.mp4';
@@ -367,7 +368,17 @@ function Hero({ isDark }: { isDark: boolean }) {
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         >
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span className="text-8xl" style={{ filter: isDark ? 'drop-shadow(0 0 24px rgba(148,163,184,0.4))' : 'none' }}>⚛</span>
+            <img
+              src={atomIcon}
+              alt="atom"
+              style={{
+                width: '96px',
+                height: '96px',
+                objectFit: 'contain',
+                mixBlendMode: isDark ? 'screen' : 'multiply',
+                filter: isDark ? 'invert(1) brightness(1.8)' : 'none',
+              }}
+            />
 
             {/* Orbiting neon ball */}
             <motion.div
